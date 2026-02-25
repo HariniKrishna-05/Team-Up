@@ -1,0 +1,4 @@
+Flask
+oracledb
+werkzeug
+python-dotenv

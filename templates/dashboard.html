@@ -1,0 +1,860 @@
+<!-- {% extends "base.html" %}
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #0d0d12;
+    --surface: #16161f;
+    --surface2: #1e1e2a;
+    --border: #2a2a3a;
+    --accent: #7c6aff;
+    --accent2: #ff6a9b;
+    --accent3: #6affda;
+    --text: #e8e8f0;
+    --text-muted: #7a7a9a;
+    --sidebar-w: 260px;
+    --radius: 14px;
+  }
+
+  /* THEMES */
+  [data-theme="aurora"] {
+    --accent: #7c6aff;
+    --accent2: #ff6a9b;
+    --accent3: #6affda;
+    --bg: #0d0d12;
+    --surface: #16161f;
+    --surface2: #1e1e2a;
+    --border: #2a2a3a;
+  }
+  [data-theme="solar"] {
+    --accent: #f59e0b;
+    --accent2: #ef4444;
+    --accent3: #10b981;
+    --bg: #0f0a00;
+    --surface: #1a1200;
+    --surface2: #231900;
+    --border: #332600;
+  }
+  [data-theme="arctic"] {
+    --accent: #38bdf8;
+    --accent2: #818cf8;
+    --accent3: #34d399;
+    --bg: #03080f;
+    --surface: #071120;
+    --surface2: #0d1a30;
+    --border: #162440;
+  }
+  [data-theme="sakura"] {
+    --accent: #f472b6;
+    --accent2: #a78bfa;
+    --accent3: #fb923c;
+    --bg: #0f0612;
+    --surface: #1a0b1e;
+    --surface2: #23102a;
+    --border: #351840;
+  }
+  [data-theme="light"] {
+    --bg: #f0f0f8;
+    --surface: #ffffff;
+    --surface2: #f5f5ff;
+    --border: #e0e0ee;
+    --accent: #6c5ce7;
+    --accent2: #fd79a8;
+    --accent3: #00cec9;
+    --text: #1a1a2e;
+    --text-muted: #6b6b8a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+    transition: background 0.4s, color 0.4s;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    z-index: 100;
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), background 0.4s;
+  }
+
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: -0.3px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Profile card */
+  .profile-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .profile-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent)10, transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .profile-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .profile-card:hover::before { opacity: 1; }
+
+  .avatar {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .profile-info { flex: 1; min-width: 0; }
+  .profile-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .profile-role { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .edit-btn {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .edit-btn:hover { background: var(--accent); border-color: var(--accent); }
+  .edit-btn svg { width: 13px; height: 13px; stroke: var(--text-muted); transition: stroke 0.2s; }
+  .edit-btn:hover svg { stroke: #fff; }
+
+  /* Nav */
+  .nav-section { margin-bottom: 8px; }
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 10px;
+    margin-bottom: 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+    margin-bottom: 2px;
+  }
+  .nav-item svg { width: 18px; height: 18px; stroke: currentColor; flex-shrink: 0; transition: stroke 0.2s; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--accent)22, var(--accent2)11);
+    color: var(--accent);
+    border: 1px solid var(--accent)33;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 20px;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+
+  /* Theme picker */
+  .theme-section {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .theme-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .theme-dots {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .theme-dot {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+  }
+  .theme-dot:hover { transform: scale(1.15); }
+  .theme-dot.active { border-color: var(--text); transform: scale(1.1); }
+  .theme-dot[data-theme-pick="aurora"] { background: linear-gradient(135deg, #7c6aff, #ff6a9b); }
+  .theme-dot[data-theme-pick="solar"] { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+  .theme-dot[data-theme-pick="arctic"] { background: linear-gradient(135deg, #38bdf8, #818cf8); }
+  .theme-dot[data-theme-pick="sakura"] { background: linear-gradient(135deg, #f472b6, #a78bfa); }
+  .theme-dot[data-theme-pick="light"] { background: linear-gradient(135deg, #e0e0ee, #c5c5ff); border-color: var(--border); }
+
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: #ff6a6a;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s;
+    border: 1px solid transparent;
+  }
+  .logout-btn svg { width: 18px; height: 18px; stroke: currentColor; flex-shrink: 0; }
+  .logout-btn:hover { background: #ff6a6a18; border-color: #ff6a6a33; }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  /* Top bar */
+  .topbar {
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+    backdrop-filter: blur(12px);
+    transition: background 0.4s;
+  }
+  .topbar-greeting {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    background: linear-gradient(135deg, var(--text), var(--text-muted));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .topbar-greeting span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .notif-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+  .notif-btn svg { width: 18px; height: 18px; stroke: var(--text-muted); }
+  .notif-btn:hover { border-color: var(--accent); }
+  .notif-dot {
+    position: absolute;
+    top: 7px; right: 8px;
+    width: 7px; height: 7px;
+    background: var(--accent2);
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+  }
+
+  /* Content */
+  .content {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+    animation: fadeUp 0.5s ease both;
+  }
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.1s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+  .stat-card:nth-child(4) { animation-delay: 0.2s; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.06;
+    transition: opacity 0.3s;
+  }
+  .stat-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+  .stat-card:hover::after { opacity: 0.12; }
+  .stat-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    margin-bottom: 14px;
+  }
+  .stat-icon svg { width: 18px; height: 18px; }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+
+  /* Sections */
+  .sections-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 20px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: fadeUp 0.5s ease 0.25s both;
+  }
+  .panel-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .panel-action {
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--accent)44;
+    transition: background 0.2s;
+  }
+  .panel-action:hover { background: var(--accent)18; }
+  .panel-body { padding: 18px 22px; }
+
+  /* Project list */
+  .project-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    transition: opacity 0.2s;
+  }
+  .project-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .project-item:first-child { padding-top: 0; }
+  .project-thumb {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: grid; place-items: center;
+    font-size: 20px;
+  }
+  .project-info { flex: 1; min-width: 0; }
+  .project-name {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .project-meta { font-size: 12px; color: var(--text-muted); }
+  .project-status {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+  .status-live { background: #10b98122; color: #10b981; }
+  .status-wip { background: var(--accent)22; color: var(--accent); }
+  .status-review { background: #f59e0b22; color: #f59e0b; }
+
+  /* Hackathon cards */
+  .hack-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .hack-card:last-child { margin-bottom: 0; }
+  .hack-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+  }
+  .hack-card:hover { border-color: var(--accent); transform: translateX(3px); }
+  .hack-card:nth-child(2)::before { background: var(--accent2); }
+  .hack-card:nth-child(3)::before { background: var(--accent3); }
+  .hack-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 5px;
+  }
+  .hack-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 12px; margin-bottom: 8px; }
+  .hack-prize {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent3);
+    background: var(--accent3)18;
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s, background 0.3s;
+    animation: fadeUp 0.5s ease 0.3s both;
+  }
+  .upload-zone:hover { border-color: var(--accent); background: var(--accent)08; }
+  .upload-icon {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--accent)22, var(--accent2)11);
+    border-radius: 14px;
+    display: grid; place-items: center;
+    margin: 0 auto 14px;
+    border: 1px solid var(--accent)33;
+  }
+  .upload-icon svg { width: 24px; height: 24px; stroke: var(--accent); }
+  .upload-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .upload-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+  .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .upload-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* Mobile toggle */
+  .mob-toggle {
+    display: none;
+    position: fixed;
+    top: 16px; left: 16px;
+    z-index: 200;
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    place-items: center;
+  }
+  .mob-toggle svg { width: 20px; height: 20px; stroke: var(--text); }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #00000080;
+    z-index: 99;
+  }
+
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .sections-row { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 700px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: none; }
+    .sidebar-overlay.open { display: block; }
+    .main { margin-left: 0; }
+    .mob-toggle { display: grid; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .topbar { padding: 14px 20px 14px 64px; }
+    .content { padding: 20px; }
+  }
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: 1fr; }
+  }
+</style>
+
+<button class="mob-toggle" id="mobToggle">
+  <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">T</div>
+    <div class="logo-text">TeamUp</div>
+  </div>
+
+  <!-- Profile -->
+  <div class="profile-card" onclick="setActive('profile-edit')">
+    <div class="avatar">{{ name[0]|upper }}</div>
+    <div class="profile-info">
+      <div class="profile-name">{{ name }}</div>
+      <div class="profile-role">Full-Stack Dev · Pro</div>
+    </div>
+    <div class="edit-btn" title="Edit Profile">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+    </div>
+  </div>
+
+  <!-- Main nav -->
+  <div class="nav-section">
+    <div class="nav-label">Workspace</div>
+    <a class="nav-item active" id="nav-dashboard" href="#" onclick="setActive('dashboard'); return false;">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" id="nav-upload" href="#" onclick="setActive('upload'); return false;">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      Upload Project
+    </a>
+    <a class="nav-item" id="nav-projects" href="#" onclick="setActive('projects'); return false;">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      My Projects
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" id="nav-hackathon" href="#" onclick="setActive('hackathon'); return false;">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Hackathons
+      <span class="nav-badge" style="background: var(--accent2);">2</span>
+    </a>
+    <a class="nav-item" id="nav-profile-edit" href="#" onclick="setActive('profile-edit'); return false;">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      Edit Profile
+    </a>
+  </div>
+
+  <!-- Theme -->
+  <div class="theme-section">
+    <div class="theme-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      Theme
+    </div>
+    <div class="theme-dots">
+      <div class="theme-dot active" data-theme-pick="aurora" title="Aurora" onclick="setTheme('aurora', this)"></div>
+      <div class="theme-dot" data-theme-pick="solar" title="Solar" onclick="setTheme('solar', this)"></div>
+      <div class="theme-dot" data-theme-pick="arctic" title="Arctic" onclick="setTheme('arctic', this)"></div>
+      <div class="theme-dot" data-theme-pick="sakura" title="Sakura" onclick="setTheme('sakura', this)"></div>
+      <div class="theme-dot" data-theme-pick="light" title="Light" onclick="setTheme('light', this)"></div>
+    </div>
+
+    <a href="/logout" class="logout-btn">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Logout
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-greeting">Hey, <span>{{ name }}</span> 👋</div>
+    <div class="topbar-actions">
+      <div class="notif-btn">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <div class="notif-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon" style="background: var(--accent)18;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        </div>
+        <div class="stat-num">3</div>
+        <div class="stat-label">Projects Uploaded</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: var(--accent2)18;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div class="stat-num">2</div>
+        <div class="stat-label">Hackathons Joined</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: var(--accent3)18;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent3)" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="stat-num">1</div>
+        <div class="stat-label">Wins</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: #f59e0b18;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </div>
+        <div class="stat-num">48</div>
+        <div class="stat-label">Reputation Score</div>
+      </div>
+    </div>
+
+    <!-- Sections row -->
+    <div class="sections-row">
+
+      <!-- Projects panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">My Projects</div>
+          <a href="#" class="panel-action" onclick="setActive('projects'); return false;">View All</a>
+        </div>
+        <div class="panel-body">
+          <div class="project-item">
+            <div class="project-thumb" style="background: var(--accent)18;">🧠</div>
+            <div class="project-info">
+              <div class="project-name">NeuralNotes</div>
+              <div class="project-meta">AI · React · Python · Updated 2d ago</div>
+            </div>
+            <div class="project-status status-live">Live</div>
+          </div>
+          <div class="project-item">
+            <div class="project-thumb" style="background: var(--accent2)18;">🌐</div>
+            <div class="project-info">
+              <div class="project-name">GeoMapper</div>
+              <div class="project-meta">Maps · Node.js · Updated 5d ago</div>
+            </div>
+            <div class="project-status status-wip">WIP</div>
+          </div>
+          <div class="project-item">
+            <div class="project-thumb" style="background: var(--accent3)18;">⚡</div>
+            <div class="project-info">
+              <div class="project-name">SpeedLaunch</div>
+              <div class="project-meta">SaaS · Next.js · Updated 1w ago</div>
+            </div>
+            <div class="project-status status-review">Review</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hackathons panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Hackathons</div>
+          <a href="#" class="panel-action" onclick="setActive('hackathon'); return false;">Browse</a>
+        </div>
+        <div class="panel-body">
+          <div class="hack-card">
+            <div class="hack-name">AI Frontier 2025</div>
+            <div class="hack-meta">
+              <span>📅 Mar 15–17</span>
+              <span>👥 1,200 teams</span>
+            </div>
+            <span class="hack-prize">$50,000 Prize Pool</span>
+          </div>
+          <div class="hack-card">
+            <div class="hack-name">WebDev World Cup</div>
+            <div class="hack-meta">
+              <span>📅 Apr 1–3</span>
+              <span>👥 800 teams</span>
+            </div>
+            <span class="hack-prize">$25,000 Prize Pool</span>
+          </div>
+          <div class="hack-card">
+            <div class="hack-name">GreenTech Hack</div>
+            <div class="hack-meta">
+              <span>📅 May 10–12</span>
+              <span>👥 500 teams</span>
+            </div>
+            <span class="hack-prize">$15,000 Prize Pool</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Upload zone -->
+    <div class="upload-zone" onclick="setActive('upload')">
+      <div class="upload-icon">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      </div>
+      <div class="upload-title">Upload a New Project</div>
+      <div class="upload-sub">Drag & drop files here, or click to select<br>Supports ZIP, PDF, images, and more</div>
+      <button class="upload-btn">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        New Upload
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const allNavIds = ['dashboard','upload','projects','hackathon','profile-edit'];
+
+  function setActive(id) {
+    allNavIds.forEach(n => {
+      const el = document.getElementById('nav-' + n);
+      if (el) el.classList.remove('active');
+    });
+    const target = document.getElementById('nav-' + id);
+    if (target) target.classList.add('active');
+    // close mobile sidebar
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  }
+
+  function setTheme(theme, dotEl) {
+    document.body.setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    dotEl.classList.add('active');
+  }
+
+  // Mobile toggle
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  document.getElementById('mobToggle').addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+  });
+</script>
+
+{% endblock %}

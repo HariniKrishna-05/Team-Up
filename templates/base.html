@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Up</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+    <style>
+      :root {
+        --bg: #0d0d12;
+        --surface: #16161f;
+        --surface2: #1e1e2a;
+        --border: #2a2a3a;
+        --accent: #7c6aff;
+        --accent2: #ff6a9b;
+        --accent3: #6affda;
+        --text: #e8e8f0;
+        --text-muted: #7a7a9a;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* ── BACKGROUND ORBS ── */
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--border) 1px, transparent 1px),
+          linear-gradient(90deg, var(--border) 1px, transparent 1px);
+        background-size: 40px 40px;
+        opacity: 0.18;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .bg-orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(110px);
+        pointer-events: none;
+        z-index: 0;
+        animation: drift 14s ease-in-out infinite alternate;
+      }
+      .orb-1 {
+        width: 500px; height: 500px;
+        background: var(--accent);
+        opacity: 0.07;
+        top: -120px; left: -120px;
+        animation-delay: 0s;
+      }
+      .orb-2 {
+        width: 420px; height: 420px;
+        background: var(--accent2);
+        opacity: 0.06;
+        bottom: -80px; right: -80px;
+        animation-delay: -5s;
+      }
+      .orb-3 {
+        width: 300px; height: 300px;
+        background: var(--accent3);
+        opacity: 0.05;
+        top: 40%; left: 60%;
+        animation-delay: -9s;
+      }
+      @keyframes drift {
+        from { transform: translate(0, 0) scale(1); }
+        to   { transform: translate(28px, 20px) scale(1.06); }
+      }
+
+      /* ── CONTENT LAYER ── */
+      body > *:not(.bg-orb) {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ── FLASH / WARNING TOASTS
+         position: fixed + z-index: 9999 makes this immune to any
+         child-page body overrides (flex, grid, etc.)          ── */
+      .flashes {
+        list-style: none;
+
+        /* anchored to viewport — never affected by body layout */
+        position: fixed !important;
+        top: 20px !important;
+        right: 20px !important;
+        left: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 320px;
+        max-width: calc(100vw - 40px);
+
+        /* reset any inherited flex-child stretching */
+        align-self: flex-start;
+        margin: 0;
+        padding: 0;
+      }
+
+      .flashes li {
+         background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border: 1px solid #d33535;
+        border-left: 4px solid #d33535;
+        border-radius: 12px;
+        padding: 13px 36px 15px 14px;
+        font-size: 13px;
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 500;
+        color: #1a1a2e;
+        line-height: 1.5;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.13), 0 1px 4px rgba(245,158,11,0.1);
+        position: relative;
+        overflow: visible;
+        animation: toastIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        cursor: default;
+      }
+
+      /* staggered entrance for multiple toasts */
+      .flashes li:nth-child(2) { animation-delay: 0.08s; }
+      .flashes li:nth-child(3) { animation-delay: 0.16s; }
+
+      @keyframes toastIn {
+        from { opacity: 0; transform: translateX(50px) scale(0.95); }
+        to   { opacity: 1; transform: translateX(0) scale(1); }
+      }
+
+      /* ⚠ warning icon — flex item, no positioning tricks */
+      .flashes li::before {
+        content: '⚠';
+        font-size: 15px;
+        color: #f50b0b;
+        flex-shrink: 0;
+        line-height: 1.5;
+      }
+
+      /* amber progress bar clipped inside a wrapper */
+      .flashes li .toast-bar {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: 0 0 12px 12px;
+        background: linear-gradient(90deg, #d33535, #d33535);
+        transform-origin: left;
+        animation: shrink 4s linear forwards;
+      }
+      @keyframes shrink {
+        from { transform: scaleX(1); }
+        to   { transform: scaleX(0); }
+      }
+
+      /* ✕ close button */
+      .toast-close {
+        position: absolute;
+        top: 9px; right: 9px;
+        background: none;
+        border: none;
+        color: #080808;
+        cursor: pointer;
+        font-size: 13px;
+        width: 22px; height: 22px;
+        border-radius: 6px;
+        display: grid; place-items: center;
+        transition: color 0.2s, background 0.2s;
+        line-height: 1;
+      }
+      .toast-close:hover {
+        color: #374151;
+        background: #f3f4f6;
+      }
+
+      @media (max-width: 480px) {
+        .flashes {
+          right: 12px !important;
+          top: 12px !important;
+          width: calc(100vw - 24px);
+        }
+      }
+    </style>
+</head>
+<body>
+
+  <!-- Background orbs -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <!-- ✅ ORIGINAL FLASH MESSAGE LOGIC — get_flashed_messages(), .flashes, {{ message }} all preserved -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul class="flashes">
+      {% for message in messages %}
+        <li>
+          {{ message }}
+          <button class="toast-close" onclick="this.closest('li').remove()" aria-label="Dismiss">✕</button>
+          <div class="toast-bar"></div>
+        </li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ✅ ORIGINAL BLOCK — unchanged -->
+  {% block content %}{% endblock %}
+
+</body>
+</html>
