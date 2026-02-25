@@ -12,12 +12,12 @@ This Flask app manages student signup/login with OTP verification using an Oracl
 2. **Configure environment**
    - Copy `.env` to a local file and fill in the values:
      ```ini
-     EMAIL_USER=teamup219@gmail.com
+     EMAIL_USER=your_email
      EMAIL_PASS=<your-gmail-app-password>
      SECRET_KEY=<random string>
-     ORACLE_USER=system
-     ORACLE_PASSWORD=system123
-     ORACLE_DSN=localhost:1521/XEPDB1
+     ORACLE_USER=your_username
+     ORACLE_PASSWORD=your_password
+     ORACLE_DSN=Your_dsn
      ```
    - Gmail requires an "app password" or allowing less-secure apps for SMTP.
 
