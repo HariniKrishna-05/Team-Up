@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeamUp Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#080d0c;--surface:#0e1614;--surface2:#141f1c;--border:#1e2e2b;--accent:#00c9a7;--accent2:#ff6b35;--accent3:#ffd166;--text:#e0f0ed;--text-muted:#6a8a84;--sidebar-w:240px;--radius:14px;}
+  [data-theme="neon-ember"]{--accent:#00c9a7;--accent2:#ff6b35;--accent3:#ffd166;--bg:#080d0c;--surface:#0e1614;--surface2:#141f1c;--border:#1e2e2b;--text:#e0f0ed;--text-muted:#6a8a84;}
+  [data-theme="neon-ember-light"]{--accent:#00a88c;--accent2:#e85d2a;--accent3:#d4971a;--bg:#f0faf8;--surface:#ffffff;--surface2:#e8f7f3;--border:#c8e8e2;--text:#0a2420;--text-muted:#4a7a74;}
+  [data-theme="aurora"]{--accent:#7c6aff;--accent2:#ff6a9b;--accent3:#6affda;--bg:#0d0d12;--surface:#16161f;--surface2:#1e1e2a;--border:#2a2a3a;--text:#e8e8f0;--text-muted:#7a7a9a;}
+  [data-theme="aurora-light"]{--accent:#6c5ce7;--accent2:#fd79a8;--accent3:#00cec9;--bg:#f0f0f8;--surface:#ffffff;--surface2:#f5f5ff;--border:#e0e0ee;--text:#1a1a2e;--text-muted:#6b6b8a;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow:hidden;transition:background .4s,color .4s;}
+
+  /* SIDEBAR */
+  .sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:22px 14px;position:fixed;left:0;top:0;bottom:0;z-index:100;transition:transform .35s cubic-bezier(.4,0,.2,1),background .4s;overflow-y:auto;}
+  .sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 6px 24px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;}
+  .logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .admin-badge{display:flex;align-items:center;gap:10px;padding:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,transparent),color-mix(in srgb,var(--accent2) 5%,transparent));border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:var(--radius);margin-bottom:18px;}
+  .admin-avatar{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;}
+  .admin-info{flex:1;min-width:0;}
+  .admin-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .admin-role{font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;letter-spacing:.5px;text-transform:uppercase;}
+  .nav-label{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);padding:0 8px;margin-bottom:5px;margin-top:8px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--text-muted);font-size:13.5px;font-weight:500;position:relative;margin-bottom:2px;transition:background .2s,color .2s;border:1px solid transparent;}
+  .nav-item svg{width:17px;height:17px;stroke:currentColor;flex-shrink:0;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 15%,transparent),color-mix(in srgb,var(--accent2) 8%,transparent));color:var(--accent);border-color:color-mix(in srgb,var(--accent) 25%,transparent);}
+  .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--accent);border-radius:0 3px 3px 0;}
+  .nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
+  .nav-badge.amber{background:#f59e0b;}
+  .theme-section{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);}
+  .theme-label{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:9px;display:flex;align-items:center;gap:6px;}
+  .theme-dots{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .theme-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .2s,border-color .2s;}
+  .theme-dot:hover{transform:scale(1.15);}
+  .theme-dot.active{border-color:var(--text);transform:scale(1.1);}
+  .theme-dot[data-t="neon-ember"]{background:linear-gradient(135deg,#00c9a7,#ff6b35);}
+  .theme-dot[data-t="neon-ember-light"]{background:linear-gradient(135deg,#a8f0e6,#ffb89a);border-color:var(--border);}
+  .theme-dot[data-t="aurora"]{background:linear-gradient(135deg,#7c6aff,#ff6a9b);}
+  .theme-dot[data-t="aurora-light"]{background:linear-gradient(135deg,#c5b8ff,#ffb3d1);border-color:var(--border);}
+  .logout-btn{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;color:#ff6a6a;font-size:13.5px;font-weight:500;text-decoration:none;transition:background .2s;border:1px solid transparent;}
+  .logout-btn svg{width:17px;height:17px;stroke:currentColor;flex-shrink:0;}
+  .logout-btn:hover{background:rgba(255,106,106,.1);border-color:rgba(255,106,106,.2);}
+
+  /* MAIN */
+  .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;overflow-y:auto;}
+  .topbar{padding:16px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10;backdrop-filter:blur(12px);transition:background .4s;gap:16px;}
+  .topbar-greeting{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;background:linear-gradient(135deg,var(--text),var(--text-muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .topbar-greeting span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .topbar-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+
+  /* CONTENT */
+  .content{padding:24px 28px;display:flex;flex-direction:column;gap:22px;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+  /* STATS */
+  .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:34px;}
+  .stat-card{background:var(--surface);border:3px solid var(--border);border-radius:var(--radius);padding:18px 16px;position:relative;overflow:hidden;transition:border-color .3s,transform .3s;animation:fadeUp .5s ease both;}
+  .stat-card:nth-child(1){animation-delay:.05s}.stat-card:nth-child(2){animation-delay:.09s}.stat-card:nth-child(3){animation-delay:.13s}.stat-card:nth-child(4){animation-delay:.17s}.stat-card:nth-child(5){animation-delay:.21s}.stat-card:nth-child(6){animation-delay:.25s}
+  .stat-card::after{content:'';position:absolute;top:-18px;right:-18px;width:70px;height:70px;border-radius:50%;background:var(--c,var(--accent));opacity:.07;transition:opacity .3s;}
+  .stat-card:hover{border-color:var(--c,var(--accent));transform:translateY(-3px);}
+  .stat-card:hover::after{opacity:.14;}
+  .stat-icon{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;margin-bottom:12px;}
+  .stat-icon svg{width:16px;height:16px;}
+  .stat-num{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;line-height:1;margin-bottom:3px;}
+  .stat-label{font-size:11px;color:var(--text-muted);}
+  .stat-trend{font-size:10px;margin-top:5px;font-weight:600;}
+  .stat-trend.up{color:#10b981;}
+  .stat-trend.neutral{color:var(--text-muted);}
+  .stat-last{font-size:10px;color:var(--text-muted);margin-top:5px;}
+  .active-event-card{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 15%,transparent),color-mix(in srgb,var(--accent2) 8%,transparent));border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);}
+  .event-dot{width:7px;height:7px;background:#10b981;border-radius:50%;display:inline-block;margin-right:5px;box-shadow:0 0 6px #10b981;}
+  .active-event-name{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;margin-bottom:4px;}
+  .active-event-badge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(16,185,129,.13);color:#10b981;display:inline-flex;align-items:center;gap:4px;margin-top:6px;}
+
+  /* BOTTOM */
+  .bottom-row{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:fadeUp .5s ease .28s both;}
+  .panel-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .panel-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+  .panel-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .panel-action{font-size:12px;color:var(--accent);cursor:pointer;text-decoration:none;font-weight:500;padding:4px 11px;border-radius:8px;border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);transition:background .2s;}
+  .panel-action:hover{background:color-mix(in srgb,var(--accent) 12%,transparent);}
+  .panel-body{padding:18px 20px;}
+
+  .activity-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .activity-item:last-child{border-bottom:none;padding-bottom:0;}
+  .activity-item:first-child{padding-top:0;}
+  .activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+  .activity-text{flex:1;font-size:13px;line-height:1.5;}
+  .activity-text strong{font-weight:600;}
+  .activity-time{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .hack-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .hack-item:last-child{border-bottom:none;padding-bottom:0;}
+  .hack-item:first-child{padding-top:0;}
+  .hack-thumb{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:17px;flex-shrink:0;}
+  .hack-info{flex:1;min-width:0;}
+  .hack-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hack-meta{font-size:11px;color:var(--text-muted);margin-top:1px;}
+  .hack-status{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .hs-active{background:rgba(16,185,129,.13);color:#10b981;}
+  .hs-upcoming{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
+  .hs-closed{background:var(--border);color:var(--text-muted);}
+
+  /* MOBILE */
+  .mob-toggle{display:none;position:fixed;top:14px;left:14px;z-index:200;width:38px;height:38px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;place-items:center;}
+  .mob-toggle svg{width:18px;height:18px;stroke:var(--text);}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:#00000080;z-index:99;}
+  @media(max-width:1200px){.stats-row{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:960px){.bottom-row{grid-template-columns:1fr;}}
+  @media(max-width:700px){
+    .sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}
+    .sidebar-overlay.open{display:block}.main{margin-left:0}
+    .mob-toggle{display:grid}.topbar{padding:12px 16px 12px 58px}
+    .content{padding:16px}
+    .stats-row{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<button class="mob-toggle" id="mobToggle">
+  <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+<div class="sidebar-overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">T</div>
+    <div class="logo-text">TeamUp</div>
+  </div>
+
+  <div class="admin-badge">
+    <div class="admin-avatar">A</div>
+    <div class="admin-info">
+      <div class="admin-name">Admin</div>
+      <div class="admin-role">Administrator</div>
+    </div>
+  </div>
+
+  <div class="nav-label">Overview</div>
+  <a class="nav-item active" href="{{ url_for('admin_dashboard') }}">
+    <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Dashboard
+  </a>
+  <a class="nav-item" href="{{ url_for('admin_students') }}">
+    <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+    Students
+    <span class="nav-badge">{{ total_students }}</span>
+  </a>
+  <a class="nav-item" href="{{ url_for('hackathon_events') }}">
+    <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Hackathons
+    <span class="nav-badge" style="background:var(--accent2)">{{ total_hackathons }}</span>
+  </a>
+
+
+  <div class="theme-section">
+    <div class="theme-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      Theme
+    </div>
+    <div class="theme-dots">
+      <div class="theme-dot active" data-t="neon-ember" title="Neon Ember" onclick="setTheme('neon-ember',this)"></div>
+      <div class="theme-dot" data-t="neon-ember-light" title="Neon Ember Light" onclick="setTheme('neon-ember-light',this)"></div>
+      <div class="theme-dot" data-t="aurora" title="Aurora" onclick="setTheme('aurora',this)"></div>
+      <div class="theme-dot" data-t="aurora-light" title="Aurora Light" onclick="setTheme('aurora-light',this)"></div>
+    </div>
+    <a href="{{ url_for('admin_login') }}" class="logout-btn">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Logout
+    </a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-greeting">Hey Welcome, <span>Admin </span> 👋</div>
+      <div class="topbar-sub">Here's what's happening with TeamUp today...</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card" style="--c:var(--accent)">
+        <div class="stat-icon" style="background:color-mix(in srgb,var(--accent) 12%,transparent)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+        </div>
+        <div class="stat-num">{{ total_students }}</div>
+        <div class="stat-label">Total Students</div>
+      </div>
+
+      <div class="stat-card" style="--c:var(--accent2)">
+        <div class="stat-icon" style="background:color-mix(in srgb,var(--accent2) 12%,transparent)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent2)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div class="stat-num">{{ total_hackathons }}</div>
+        <div class="stat-label">Total Hackathons</div>
+      </div>
+
+      <div class="stat-card" style="--c:var(--accent3)">
+        <div class="stat-icon" style="background:color-mix(in srgb,var(--accent3) 12%,transparent)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent3)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        </div>
+        <div class="stat-num">{{ total_participants }}</div>
+        <div class="stat-label">Participants</div>
+      </div>
+
+      <div class="stat-card" style="--c:#f59e0b">
+        <div class="stat-icon" style="background:rgba(245,158,11,.12)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-linecap="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 12l2 2 4-4"/></svg>
+        </div>
+        <div class="stat-num">{{ teams_generated }}</div>
+        <div class="stat-label">Teams Generated</div>
+        <div class="stat-trend neutral">Balanced clusters</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="bottom-row">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Recent Activity</div>
+          <a href="#" class="panel-action">View All</a>
+        </div>
+        <div class="panel-body">
+          <div class="activity-item">
+            <div class="activity-dot" style="background:#10b981"></div>
+            <div class="activity-text"><strong>Arjun Sharma</strong> registered for InnovateTech 2025<div class="activity-time">2 minutes ago</div></div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--accent)"></div>
+            <div class="activity-text"><strong>K-Means clustering</strong> completed for HackSprint 2025 with K=5<div class="activity-time">16 minutes ago</div></div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--accent2)"></div>
+            <div class="activity-text"><strong>12 balanced teams</strong> generated for DataHack 2025<div class="activity-time">1 hour ago</div></div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:#f59e0b"></div>
+            <div class="activity-text"><strong>New hackathon</strong> Alverse 2026 created and set to Active<div class="activity-time">3 hours ago</div></div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--accent3)"></div>
+            <div class="activity-text"><strong>Priya Nair</strong> student record updated (skill scores revised)<div class="activity-time">5 hours ago</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Hackathons</div>
+          <a href="#" class="panel-action">Manage</a>
+        </div>
+        <div class="panel-body">
+          <div class="hack-item">
+            <div class="hack-thumb" style="background:color-mix(in srgb,var(--accent) 12%,transparent)">🚀</div>
+            <div class="hack-info"><div class="hack-name">InnovateTech 2025</div><div class="hack-meta">Mar 15–17 · 42 teams</div></div>
+            <div class="hack-status hs-active">Active</div>
+          </div>
+          <div class="hack-item">
+            <div class="hack-thumb" style="background:color-mix(in srgb,var(--accent2) 12%,transparent)">⚡</div>
+            <div class="hack-info"><div class="hack-name">HackSprint 2025</div><div class="hack-meta">Apr 1–3 · 28 teams</div></div>
+            <div class="hack-status hs-upcoming">Upcoming</div>
+          </div>
+          <div class="hack-item">
+            <div class="hack-thumb" style="background:color-mix(in srgb,var(--accent3) 12%,transparent)">🌱</div>
+            <div class="hack-info"><div class="hack-name">GreenTech Hack</div><div class="hack-meta">May 10–12 · 18 teams</div></div>
+            <div class="hack-status hs-closed">Closed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+
+  /* THEME */
+  function setTheme(t, el) {
+    document.body.setAttribute('data-theme', t);
+    document.querySelectorAll('.theme-dot').forEach(d=>d.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  /* MOBILE */
+  const sb = document.getElementById('sidebar'), ov = document.getElementById('overlay');
+  document.getElementById('mobToggle').addEventListener('click', ()=>{ sb.classList.toggle('open'); ov.classList.toggle('open'); });
+  ov.addEventListener('click', ()=>{ sb.classList.remove('open'); ov.classList.remove('open'); });
+</script>
+</body>
+</html>

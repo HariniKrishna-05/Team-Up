@@ -1,0 +1,500 @@
+<!-- {% extends "base.html" %}
+{% block content %} -->
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #0d0d12;
+    --surface: #16161f;
+    --surface2: #1e1e2a;
+    --border: #2a2a3a;
+    --accent: #7c6aff;
+    --accent2: #ff6a9b;
+    --accent3: #6affda;
+    --text: #e8e8f0;
+    --text-muted: #7a7a9a;
+    --sidebar-w: 260px;
+    --radius: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    z-index: 100;
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 8px 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; color: #fff;
+  }
+  .logo-text {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .profile-card {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+    position: relative; overflow: hidden;
+  }
+  .avatar {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%; display: grid; place-items: center;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; color: #fff; flex-shrink: 0;
+    overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .profile-info { flex: 1; min-width: 0; }
+  .profile-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+  .profile-role { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .edit-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: var(--accent); border: 1px solid var(--accent);
+    display: grid; place-items: center; cursor: pointer; flex-shrink: 0; text-decoration: none;
+  }
+  .edit-btn svg { width: 13px; height: 13px; stroke: #fff; }
+
+  .nav-section { margin-bottom: 8px; }
+  .nav-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--text-muted); padding: 0 10px; margin-bottom: 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 10px;
+    cursor: pointer; text-decoration: none; color: var(--text-muted); font-size: 14px; font-weight: 500;
+    position: relative; margin-bottom: 2px; transition: background 0.2s, color 0.2s;
+  }
+  .nav-item svg { width: 18px; height: 18px; stroke: currentColor; flex-shrink: 0; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--accent)22, var(--accent2)11);
+    color: var(--accent); border: 1px solid var(--accent)33;
+  }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 20px; background: var(--accent); border-radius: 0 3px 3px 0;
+  }
+  .nav-badge {
+    margin-left: auto; background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+  }
+
+  /* THEMES */
+  [data-theme="aurora"] {
+    --accent: #7c6aff; --accent2: #ff6a9b; --accent3: #6affda;
+    --bg: #0d0d12; --surface: #16161f; --surface2: #1e1e2a;
+    --border: #2a2a3a; --text: #e8e8f0; --text-muted: #7a7a9a;
+  }
+  [data-theme="aurora-light"] {
+    --accent: #6c5ce7; --accent2: #fd79a8; --accent3: #00cec9;
+    --bg: #f0f0f8; --surface: #ffffff; --surface2: #f5f5ff;
+    --border: #e0e0ee; --text: #1a1a2e; --text-muted: #6b6b8a;
+  }
+  [data-theme="neon-ember"] {
+    --accent: #00c9a7; --accent2: #ff6b35; --accent3: #ffd166;
+    --bg: #080d0c; --surface: #0e1614; --surface2: #141f1c;
+    --border: #1e2e2b; --text: #e0f0ed; --text-muted: #6a8a84;
+  }
+  [data-theme="neon-ember-light"] {
+    --accent: #00a88c; --accent2: #e85d2a; --accent3: #d4971a;
+    --bg: #f0faf8; --surface: #ffffff; --surface2: #e8f7f3;
+    --border: #c8e8e2; --text: #0a2420; --text-muted: #4a7a74;
+  }
+
+  .theme-section {
+    margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .theme-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .theme-dots { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .theme-dot {
+    width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: transform 0.2s, border-color 0.2s;
+  }
+  .theme-dot:hover { transform: scale(1.15); }
+  .theme-dot.active { border-color: var(--text); transform: scale(1.1); }
+  .theme-dot[data-theme-pick="aurora"] { background: linear-gradient(135deg, #7c6aff, #ff6a9b); }
+  .theme-dot[data-theme-pick="aurora-light"] { background: linear-gradient(135deg, #c5b8ff, #ffb3d1); border-color: var(--border); }
+  .theme-dot[data-theme-pick="neon-ember"] { background: linear-gradient(135deg, #00c9a7, #ff6b35); }
+  .theme-dot[data-theme-pick="neon-ember-light"] { background: linear-gradient(135deg, #a8f0e6, #ffb89a); border-color: var(--border); }
+
+  .logout-btn {
+    display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 10px;
+    cursor: pointer; color: #ff6a6a; font-size: 14px; font-weight: 500;
+    text-decoration: none; transition: background 0.2s; border: 1px solid transparent;
+  }
+  .logout-btn svg { width: 18px; height: 18px; stroke: currentColor; flex-shrink: 0; }
+  .logout-btn:hover { background: #ff6a6a18; border-color: #ff6a6a33; }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1; min-height: 100vh; display: flex; flex-direction: column; overflow-y: auto;
+  }
+  .topbar {
+    padding: 20px 32px; display: flex; align-items: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 10; backdrop-filter: blur(12px);
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text-muted); font-size: 14px; font-weight: 500; text-decoration: none;
+    padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border);
+    transition: border-color 0.2s, color 0.2s; margin-right: 20px;
+  }
+  .back-btn svg { width: 16px; height: 16px; stroke: currentColor; }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .topbar-title {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* ── EDIT FORM ── */
+  .content { padding: 36px 32px; max-width: 760px; }
+  .form-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .form-card-header {
+    padding: 24px 28px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+  }
+  .form-avatar-wrap { position: relative; width: fit-content; }
+  .form-avatar {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%; display: grid; place-items: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: #fff;
+    overflow: hidden;
+    transition: opacity 0.2s;
+  }
+  .form-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+  /* Camera button styles */
+  .avatar-change-btn {
+    position: absolute; bottom: 0; right: 0;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--surface);
+    display: grid; place-items: center; cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .avatar-change-btn:hover {
+    transform: scale(1.15);
+    background: var(--accent2);
+  }
+  .avatar-change-btn svg { width: 12px; height: 12px; stroke: #fff; }
+
+  /* Upload ripple animation */
+  .form-avatar-wrap.uploading .form-avatar {
+    animation: avatarPulse 0.6s ease;
+  }
+  @keyframes avatarPulse {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(0.92); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .form-header-info { flex: 1; }
+  .form-header-info h2 {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 4px;
+  }
+  .form-header-info p { font-size: 13px; color: var(--text-muted); }
+
+  .form-body { padding: 28px; display: flex; flex-direction: column; gap: 20px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .form-input, .form-select, .form-textarea {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s; outline: none; width: 100%;
+  }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent)18;
+  }
+  .form-select { appearance: none; cursor: pointer; }
+  .form-select option { background: var(--surface2); }
+  .form-textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+  .input-with-icon { position: relative; }
+  .input-with-icon .input-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; stroke: var(--text-muted);
+  }
+  .input-with-icon .form-input { padding-left: 40px; }
+  .form-footer {
+    padding: 20px 28px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cancel-btn {
+    padding: 11px 24px; border-radius: 10px; background: transparent;
+    border: 1px solid var(--border); color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .cancel-btn:hover { border-color: var(--text-muted); color: var(--text); }
+  .save-btn {
+    padding: 11px 28px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .save-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .save-btn svg { width: 15px; height: 15px; stroke: #fff; }
+
+  
+  /* Mobile */
+  .mob-toggle {
+    display: none; position: fixed; top: 16px; left: 16px; z-index: 200;
+    width: 40px; height: 40px; border-radius: 10px; background: var(--surface);
+    border: 1px solid var(--border); cursor: pointer; place-items: center;
+  }
+  .mob-toggle svg { width: 20px; height: 20px; stroke: var(--text); }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: #00000080; z-index: 99; }
+
+  @media (max-width: 700px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: none; }
+    .sidebar-overlay.open { display: block; }
+    .main { margin-left: 0; }
+    .mob-toggle { display: grid; }
+    .topbar { padding: 14px 20px 14px 64px; }
+    .content { padding: 20px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+
+<button class="mob-toggle" id="mobToggle">
+  <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">T</div>
+    <div class="logo-text">TeamUp</div>
+  </div>
+  <div class="profile-card">
+    <div class="avatar" id="sidebarAvatar">{{ name[0]|upper }}</div>
+    <div class="profile-info">
+      <div class="profile-name">{{name}}</div>
+      <!-- <div class="profile-role">{{ email}}</div> -->
+    </div>
+    <a href="#" class="edit-btn" title="Edit Profile">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+    </a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Workspace</div>
+    <a class="nav-item" href="/dashboard">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="/upload">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      Upload Project
+    </a>
+    <a class="nav-item" href="/projects">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      My Projects <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="/hackathon">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Hackathons <span class="nav-badge" style="background: var(--accent2);">2</span>
+    </a>
+  </div>
+
+  <div class="theme-section">
+    <div class="theme-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      Theme
+    </div>
+    <div class="theme-dots">
+      <div class="theme-dot active" data-theme-pick="aurora" title="Aurora" onclick="setTheme('aurora', this)"></div>
+      <div class="theme-dot" data-theme-pick="aurora-light" title="Aurora Light" onclick="setTheme('aurora-light', this)"></div>
+      <div class="theme-dot" data-theme-pick="neon-ember" title="Neon Ember" onclick="setTheme('neon-ember', this)"></div>
+      <div class="theme-dot" data-theme-pick="neon-ember-light" title="Neon Ember Light" onclick="setTheme('neon-ember-light', this)"></div>
+    </div>
+    <a href="/logout" class="logout-btn">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Logout
+    </a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <a href="/dashboard" class="back-btn">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Back
+    </a>
+    <div class="topbar-title">Edit Profile</div>
+  </div>
+
+  <div class="content">
+    <div class="form-card">
+      <!-- Header -->
+      <div class="form-card-header">
+        <div class="form-avatar-wrap" id="avatarWrap">
+          <div class="form-avatar" id="avatarDisplay">
+            {{ name[0]|upper }}
+          </div>
+    
+        
+        </div>
+        <div class="form-header-info">
+          <h2>{{ name }}</h2>
+          <p>Update your personal information and public profile</p>
+        </div>
+      </div>
+
+      <!-- Form body -->
+      <form class="form-body" method="POST">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input class="form-input" type="text" name="name" placeholder="Your full name" value="{{ name }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email ID</label>
+            <input class="form-input" type="email" name="email" placeholder="you@college.edu" value="{{ email }}" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">College / University</label>
+            <input class="form-input" type="text" name="college" placeholder="e.g. IIT Bombay" value="{{ college }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Branch</label>
+            <select class="form-select form-input" name="branch">
+              <option value="">Select Branch</option>
+              <option value="CSE" {% if branch == 'CSE' %}selected{% endif %}>Computer Science & Engineering</option>
+              <option value="IT" {% if branch == 'IT' %}selected{% endif %}>Information Technology</option>
+              <option value="EEE" {% if branch == 'EEE' %}selected{% endif %}>Electrical & Electronics</option>
+              <option value="MECH" {% if branch == 'MECH' %}selected{% endif %}>Mechanical Engineering</option>
+              <option value="CIVIL" {% if branch == 'CIVIL' %}selected{% endif %}>Civil Engineering</option>
+              <option value="CHEM" {% if branch == 'CHEM' %}selected{% endif %}>Chemical Engineering</option>
+              <option value="BIO" {% if branch == 'BIO' %}selected{% endif %}>Biotechnology</option>
+              <option value="OTHER" {% if branch == 'OTHER' %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Year of Study</label>
+            <select class="form-select form-input" name="year">
+              <option value="">Select Year</option>
+              <option value="1" {% if year == "1" %}selected{% endif %}>1st Year</option>
+              <option value="2" {% if year == "2" %}selected{% endif %}>2nd Year</option>
+              <option value="3" {% if year == "3" %}selected{% endif %}>3rd Year</option>
+              <option value="4" {% if year == "4" %}selected{% endif %}>4th Year</option>
+              <option value="5" {% if year == "5" %}selected{% endif %}>5th Year</option>
+            </select>
+          </div>
+          <div class="form-group"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">GitHub Link</label>
+            <div class="input-with-icon">
+              <svg class="input-icon" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+              <input class="form-input" type="url" name="github" placeholder="https://github.com/username" value="{{ github }}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">LinkedIn Link</label>
+            <div class="input-with-icon">
+              <svg class="input-icon" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+              <input class="form-input" type="url" name="linkedin" placeholder="https://linkedin.com/in/username" value="{{ linkedin }}">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Bio</label>
+          <textarea class="form-textarea" name="bio" placeholder="Tell teammates about yourself...">{{bio}}</textarea>
+        </div>
+
+        <div class="form-footer">
+          <a href="/dashboard" class="cancel-btn">Cancel</a>
+          <button class="save-btn" type="submit">
+            <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Save Changes
+          </button>
+        </div>
+        <input type="file" name="avatar" id="avatarInput" accept="image/*" style="display:none">
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  // ── THEME ──────────────────────────────────────────────────────
+  function setTheme(theme, dotEl) {
+    document.body.setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    dotEl.classList.add('active');
+  }
+
+  // ── MOBILE SIDEBAR ─────────────────────────────────────────────
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  document.getElementById('mobToggle').addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+  });
+</script>
+
+<!-- {% endblock %} -->

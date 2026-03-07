@@ -1,22 +1,36 @@
 import pandas as pd
+from db_connection import get_connection
 
-def form_balanced_role_teams(cursor, connection):
-    """Form balanced teams based on roles and clusters"""
+
+def form_balanced_role_teams():
+
+    conn = get_connection()
+    cursor = conn.cursor()
 
     print("\n========== TEAM FORMATION STARTED ==========\n")
 
-    # Reset teams
+    # ✅ Reset teams safely
     cursor.execute("UPDATE HACKATHON_STUDENTS SET TEAM_ID = NULL")
-    connection.commit()
+    conn.commit()
 
+    # ✅ Ignore NULL hackathons (MAIN FIX)
     hackathons = pd.read_sql("""
         SELECT DISTINCT HACKATHON_PREFERENCE
         FROM HACKATHON_STUDENTS
-    """, connection)
+        WHERE HACKATHON_PREFERENCE IS NOT NULL
+    """, conn)
+
+    # extra pandas safety
+    hackathons = hackathons.dropna(subset=['HACKATHON_PREFERENCE'])
 
     team_id = 1
 
     for hackathon in hackathons['HACKATHON_PREFERENCE']:
+
+        hackathon = str(hackathon).strip()
+
+        if hackathon == "":
+            continue
 
         print(f"\nProcessing Hackathon: {hackathon}")
 
@@ -24,7 +38,7 @@ def form_balanced_role_teams(cursor, connection):
             SELECT STUDENT_ID, ROLE, CLUSTER_ID
             FROM HACKATHON_STUDENTS
             WHERE HACKATHON_PREFERENCE = :hack
-        """, connection, params={"hack": hackathon})
+        """, conn, params={"hack": hackathon})
 
         if df.empty:
             continue
@@ -60,6 +74,7 @@ def form_balanced_role_teams(cursor, connection):
                     break
 
                 student = candidates.iloc[0]
+
                 team.append(student)
                 used_clusters.add(student['CLUSTER_ID'])
 
@@ -70,17 +85,20 @@ def form_balanced_role_teams(cursor, connection):
 
             for member in team:
                 sid = int(member['STUDENT_ID'])
+
                 cursor.execute("""
                     UPDATE HACKATHON_STUDENTS
-                    SET TEAM_ID = :1
-                    WHERE STUDENT_ID = :2
-                """, (team_id, sid))
+                    SET TEAM_ID = :team
+                    WHERE STUDENT_ID = :sid
+                """, {"team": team_id, "sid": sid})
+
                 used_ids.append(sid)
 
             remaining = remaining[~remaining['STUDENT_ID'].isin(used_ids)]
+
             team_id += 1
 
-        connection.commit()
+        conn.commit()
 
         # ===============================
         # STAGE 2 → Remaining Role Only
@@ -108,45 +126,64 @@ def form_balanced_role_teams(cursor, connection):
 
             for member in team_members:
                 sid = int(member['STUDENT_ID'])
+
                 cursor.execute("""
                     UPDATE HACKATHON_STUDENTS
-                    SET TEAM_ID = :1
-                    WHERE STUDENT_ID = :2
-                """, (team_id, sid))
+                    SET TEAM_ID = :team
+                    WHERE STUDENT_ID = :sid
+                """, {"team": team_id, "sid": sid})
+
                 used_ids.append(sid)
 
             remaining = remaining[~remaining['STUDENT_ID'].isin(used_ids)]
+
             team_id += 1
 
-        connection.commit()
+        conn.commit()
 
-    print("\nTeams formed successfully")
+    cursor.close()
+    conn.close()
+
+    print("\n✅ Teams formed successfully")
 
 
+if __name__ == "__main__":
+    form_balanced_role_teams()
 def get_teams_by_hackathon(connection):
-    """Retrieve all teams organized by hackathon"""
-    
-    hackathons = pd.read_sql("""
-        SELECT DISTINCT HACKATHON_PREFERENCE
+    """
+    Returns teams grouped by hackathon and team_id
+    Used for teams.html display
+    """
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            HACKATHON_PREFERENCE,
+            TEAM_ID,
+            STUDENT_NAME,
+            ROLE
         FROM HACKATHON_STUDENTS
-        ORDER BY HACKATHON_PREFERENCE
-    """, connection)
+        WHERE TEAM_ID IS NOT NULL
+        ORDER BY HACKATHON_PREFERENCE, TEAM_ID
+    """)
 
-    teams_data = {}
+    rows = cursor.fetchall()
 
-    for hackathon in hackathons['HACKATHON_PREFERENCE']:
+    teams = {}
 
-        df = pd.read_sql("""
-            SELECT TEAM_ID,
-                   STUDENT_NAME,
-                   EMAIL_ID,
-                   ROLE
-            FROM HACKATHON_STUDENTS
-            WHERE HACKATHON_PREFERENCE = :hack
-              AND TEAM_ID IS NOT NULL
-            ORDER BY TEAM_ID, ROLE
-        """, connection, params={"hack": hackathon})
+    for hackathon, team_id, name, role in rows:
 
-        teams_data[hackathon] = df.to_dict('records')
+        if hackathon not in teams:
+            teams[hackathon] = {}
 
-    return teams_data
+        if team_id not in teams[hackathon]:
+            teams[hackathon][team_id] = []
+
+        teams[hackathon][team_id].append({
+            "name": name,
+            "role": role
+        })
+
+    cursor.close()
+    return teams

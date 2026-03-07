@@ -1,7 +1,9 @@
 import os
+import math
 from flask import Flask, render_template, request, redirect, session, flash, jsonify
 import oracledb
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import random, smtplib, datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -18,6 +20,7 @@ if backend_path not in sys.path:
 from clustering import perform_hackathon_clustering  # type: ignore
 from role_assignment import assign_roles  # type: ignore
 from team_formation import form_balanced_role_teams, get_teams_by_hackathon  # type: ignore
+from flask import send_file
 
 load_dotenv()  # load variables from .env
 
@@ -244,6 +247,112 @@ def dashboard():
     name = session.get('student_name', "")
     return render_template('dashboard.html', name=name)
 
+# ---------------- PROFILE VIEW ----------------
+@app.route("/profile")
+def view_profile():
+    if 'student_id' not in session:
+        return redirect('/login')
+
+    student_id = session['student_id']
+
+    cursor.execute("""
+        SELECT STUDENT_NAME, EMAIL_ID, COLLEGE_NAME,
+               BRANCH, YEAR_OF_STUDY, GITHUB_LINK,
+               LINKEDIN_LINK, BIO
+        FROM HACKATHON_STUDENTS
+        WHERE STUDENT_ID = :id
+    """, id=student_id)
+
+    student = cursor.fetchone()
+
+    if not student:
+        flash("Profile not found")
+        return redirect('/dashboard')
+
+    return render_template(
+        "view_profile.html",
+        name=student[0],
+        email=student[1],
+        college=student[2],
+        branch=student[3],
+        year=student[4],
+        github=student[5],
+        linkedin=student[6],
+        bio=student[7]
+    )
+
+
+# ---------------- PROFILE EDIT ----------------
+
+@app.route("/edit_profile", methods=["GET", "POST"])
+def edit_profile():
+    if 'student_id' not in session:
+        return redirect('/login')
+    
+    student_id = session['student_id']
+
+    if request.method == "POST":
+        # Collect form fields
+        name = request.form['name']
+        email = request.form['email']
+        college = request.form['college']
+        branch = request.form['branch']
+        year = int(request.form['year']) if request.form['year'] else None
+        github = request.form['github']
+        linkedin = request.form['linkedin']
+        bio = request.form['bio']
+
+
+        # Update profile info
+        cursor.execute("""
+            UPDATE HACKATHON_STUDENTS
+            SET STUDENT_NAME = :name,
+                EMAIL_ID = :email,
+                COLLEGE_NAME = :college,
+                BRANCH = :branch,
+                YEAR_OF_STUDY = :year,
+                GITHUB_LINK = :github,
+                LINKEDIN_LINK = :linkedin,
+                BIO = :bio
+            WHERE STUDENT_ID = :id
+        """, {
+            "name": name,
+            "email": email,
+            "college": college,
+            "branch": branch,
+            "year": year,
+            "github": github,
+            "linkedin": linkedin,
+            "bio": bio,
+            "id": student_id
+        })
+
+        connection.commit()
+        session['student_name'] = name
+        flash("Profile updated successfully!")
+        return redirect("/profile")
+
+    # GET request: load existing data
+    cursor.execute("""
+        SELECT STUDENT_NAME, EMAIL_ID, COLLEGE_NAME,
+               BRANCH, YEAR_OF_STUDY, GITHUB_LINK,
+               LINKEDIN_LINK, BIO
+        FROM HACKATHON_STUDENTS
+        WHERE STUDENT_ID = :id
+    """, id=student_id)
+    student = cursor.fetchone()
+
+    return render_template("edit_profile.html",
+        name=student[0],
+        email=student[1],
+        college=student[2],
+        branch=student[3],
+        year=student[4],
+        github=student[5],
+        linkedin=student[6],
+        bio=student[7],
+    )
+
 # Logout
 @app.route('/logout')
 def logout():
@@ -292,6 +401,79 @@ def init_db():
     connection.commit()
     flash('Database initialization attempted: ' + '; '.join(results))
     return redirect('/')
+
+# ----------------- Admin Credentials -----------------
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@teamup.com")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+
+# Admin Login
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
+            session['admin'] = email
+            session['is_admin'] = True
+            return redirect('/admin/dashboard')
+        error = "Invalid admin credentials."
+    return render_template('admin_login.html', error=error)
+
+# Admin Logout
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin', None)
+    session.pop('is_admin', None)
+    return redirect('/admin/login')
+
+# Admin Dashboard (placeholder)
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    with connection.cursor() as cursor:
+
+        # ---- TOTAL STUDENTS ----
+        cursor.execute("SELECT COUNT(*) FROM HACKATHON_STUDENTS")
+        total_students = cursor.fetchone()[0]
+
+        # ---- TOTAL HACKATHONS ----
+        cursor.execute("SELECT COUNT(*) FROM HACKATHONS")
+        total_hackathons = cursor.fetchone()[0]
+
+        # ---- PARTICIPANTS ----
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM HACKATHON_STUDENTS
+            WHERE HACKATHON_PREFERENCE IS NOT NULL
+        """)
+        total_participants = cursor.fetchone()[0]
+
+        # ---- TEAMS GENERATED ----
+        cursor.execute("""
+            SELECT COUNT(DISTINCT TEAM_ID)
+            FROM HACKATHON_STUDENTS
+            WHERE TEAM_ID IS NOT NULL
+        """)
+        teams_generated = cursor.fetchone()[0]
+
+    return render_template(
+        "admin_dash.html",
+        admin_name="Admin",
+        time_greeting="Welcome...",
+        today_date=datetime.datetime.now().strftime("%A, %d %B %Y"),
+
+        total_students=total_students,
+        student_growth=0,
+
+        total_hackathons=total_hackathons,
+        hackathon_new=0,
+
+        total_participants=total_participants,
+        participant_pct=0,
+
+        teams_generated=teams_generated
+    )
 
 # ==================== TEAM MANAGEMENT ROUTES ====================
 
@@ -373,6 +555,315 @@ def teams_json():
         return jsonify(teams_data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+
+
+
+# ----------------- Hackathon Management -----------------
+@app.route('/hackathon_events')
+def hackathon_events():
+    cursor.execute("""
+    SELECT h.HACKATHON_ID,
+           h.HACKATHON_NAME,
+           TO_CHAR(h.HACKATHON_DATE,'YYYY-MM-DD'),
+           h.VENUE,
+           h.DESCRIPTION,
+           h.STATUS,
+           NVL(COUNT(s.STUDENT_ID),0) AS TOTAL_REGISTERED
+    FROM HACKATHONS h
+    LEFT JOIN HACKATHON_STUDENTS s
+        ON h.HACKATHON_NAME = s.HACKATHON_PREFERENCE
+    GROUP BY h.HACKATHON_ID,
+             h.HACKATHON_NAME,
+             h.HACKATHON_DATE,
+             h.VENUE,
+             h.DESCRIPTION,
+             h.STATUS
+    ORDER BY h.HACKATHON_DATE
+""")
+    hackathons = cursor.fetchall()
+    hackathon_list = [
+    {
+        'id': h[0],
+        'name': h[1],
+        'date': h[2],
+        'venue': h[3],
+        'description': h[4],
+        'status': h[5],
+        'count': h[6]   # NEW
+    }
+    for h in hackathons
+]
+    return render_template("hackathon_events.html", hackathons=hackathon_list)
+
+@app.route('/add_hackathon', methods=['POST'])
+def add_hackathon():
+    try:
+        name = request.form['name']
+        date = request.form['date']
+        venue = request.form['venue']
+        description = request.form['description']
+        status = request.form.get('status')
+
+        cursor.execute("""
+            INSERT INTO HACKATHONS
+            (HACKATHON_NAME, HACKATHON_DATE, VENUE, DESCRIPTION, STATUS)
+            VALUES (:1, TO_DATE(:2,'YYYY-MM-DD'), :3, :4, :5)
+        """, (name, date, venue, description, status))
+        connection.commit()
+        flash("Hackathon added successfully")
+    except Exception as e:
+        app.logger.exception("Failed to add hackathon")
+        flash(f"Error adding hackathon: {str(e)}")
+    
+    # Redirect to the dashboard to reload the latest hackathons
+    return redirect('/hackathon_events')
+
+
+@app.route('/update_hackathon', methods=['POST'])
+def update_hackathon():
+    hackathon_id = request.form['id']
+    name = request.form['name']
+    date = request.form['date']
+    venue = request.form['venue']
+    description = request.form['description']
+    status = request.form.get('status')
+    
+    cursor.execute("""
+        UPDATE HACKATHONS
+        SET HACKATHON_NAME = :1,
+            HACKATHON_DATE = TO_DATE(:2,'YYYY-MM-DD'),
+            VENUE = :3,
+            DESCRIPTION = :4,
+            STATUS = :5
+        WHERE HACKATHON_ID = :6
+    """, (name, date, venue, description, status, hackathon_id))
+    connection.commit()
+    
+    flash("Hackathon updated successfully")
+    return redirect('/hackathon_events')
+
+
+@app.route('/delete_hackathon/<int:id>')
+def delete_hackathon(id):
+    cursor.execute("DELETE FROM HACKATHONS WHERE HACKATHON_ID = :1", (id,))
+    connection.commit()
+    
+    flash("Hackathon deleted successfully")
+    return redirect('/hackathon_events')
+# ---------------- ADMIN VIEW TEAMS ----------------
+@app.route('/admin/view-teams/<hackathon_name>')
+def view_teams(hackathon_name):
+
+    search = request.args.get("search", "").lower()
+
+    cursor = connection.cursor()
+
+    query = """
+        SELECT
+            STUDENT_NAME,
+            EMAIL_ID,
+            ROLE,
+            COLLEGE_NAME,
+            TEAM_ID
+        FROM HACKATHON_STUDENTS
+        WHERE HACKATHON_PREFERENCE = :hackathon_name
+        ORDER BY TEAM_ID, STUDENT_NAME
+    """
+
+    cursor.execute(query, {"hackathon_name": hackathon_name})
+    rows = cursor.fetchall()
+
+    # ---------------- GROUP BY TEAM ----------------
+    teams = {}
+
+    for row in rows:
+        team_id = row[4]
+
+        member = {
+            "name": row[0],
+            "email": row[1],
+            "role": row[2],
+            "college": row[3],
+            "highlight": False
+        }
+
+        if team_id not in teams:
+            teams[team_id] = []
+
+        teams[team_id].append(member)
+
+    # ---------------- SEARCH LOGIC ----------------
+    if search:
+
+        matched_team_id = None
+        matched_member_index = None
+
+        for tid, members in teams.items():
+            for i, m in enumerate(members):
+                if search in m["name"].lower() or search in m["email"].lower():
+                    matched_team_id = tid
+                    matched_member_index = i
+                    m["highlight"] = True
+                    break
+            if matched_team_id:
+                break
+
+        # Move searched student to TOP inside team
+        if matched_team_id is not None:
+            members = teams[matched_team_id]
+            member = members.pop(matched_member_index)
+            members.insert(0, member)
+
+            # Move that TEAM to FIRST
+            ordered = {matched_team_id: members}
+            for tid, mem in teams.items():
+                if tid != matched_team_id:
+                    ordered[tid] = mem
+
+            teams = ordered
+
+    cursor.close()
+
+    return render_template(
+        "teams.html",
+        teams=teams,
+        hackathon=hackathon_name
+    )
+@app.route('/admin/students')
+def admin_students():
+
+    search = request.args.get("search", "")
+    institution = request.args.get("institution", "")
+    hackathon = request.args.get("hackathon", "")
+    page = int(request.args.get("page", 1))
+
+    per_page = 9
+    offset = (page - 1) * per_page
+
+    # ---------------- BASE QUERY ----------------
+    base_query = """
+        FROM HACKATHON_STUDENTS
+        WHERE 1=1
+    """
+
+    params = {}
+
+    # 🔎 Search filter
+    if search:
+        base_query += """
+        AND (LOWER(STUDENT_NAME) LIKE :search
+             OR LOWER(EMAIL_ID) LIKE :search)
+        """
+        params["search"] = f"%{search.lower()}%"
+
+    # 🎓 Institution filter
+    if institution:
+        base_query += " AND COLLEGE_NAME = :institution"
+        params["institution"] = institution
+
+    # 🏆 Hackathon filter
+    if hackathon:
+        base_query += " AND HACKATHON_PREFERENCE = :hackathon"
+        params["hackathon"] = hackathon
+
+    # ---------------- GET TOTAL COUNT (IMPORTANT FIX) ----------------
+    count_query = "SELECT COUNT(*) " + base_query
+    cursor.execute(count_query, params)
+    total = cursor.fetchone()[0]
+
+    total_pages = max(1, math.ceil(total / per_page))
+
+    # ---------------- FETCH PAGINATED DATA ----------------
+    data_query = f"""
+        SELECT
+            STUDENT_ID,
+            STUDENT_NAME,
+            EMAIL_ID,
+            COLLEGE_NAME,
+            HACKATHON_PREFERENCE,
+            FRONTEND_SKILL,
+            BACKEND_SKILL,
+            COMMUNICATION_SKILL,
+            LEADERSHIP_SKILL
+        {base_query}
+        ORDER BY STUDENT_NAME
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+    """
+
+    params["offset"] = offset
+    params["limit"] = per_page
+
+    cursor.execute(data_query, params)
+    students = cursor.fetchall()
+
+    # ---------------- DROPDOWNS ----------------
+    cursor.execute("SELECT DISTINCT COLLEGE_NAME FROM HACKATHON_STUDENTS")
+    institutions = [r[0] for r in cursor.fetchall()]
+
+    cursor.execute("SELECT DISTINCT HACKATHON_PREFERENCE FROM HACKATHON_STUDENTS")
+    hackathons = [r[0] for r in cursor.fetchall()]
+
+    return render_template(
+        "student_management.html",
+        students=students,
+        institutions=institutions,
+        hackathons=hackathons,
+        page=page,
+        total_pages=total_pages,
+        search=search,
+        institution=institution,
+        hackathon=hackathon
+    )
+@app.route("/export-csv")
+def export_csv():
+
+    cursor.execute("""
+        SELECT STUDENT_NAME, EMAIL_ID, COLLEGE_NAME,
+               HACKATHON_PREFERENCE
+        FROM HACKATHON_STUDENTS
+    """)
+
+    rows = cursor.fetchall()
+
+    import pandas as pd
+    df = pd.DataFrame(rows,
+        columns=["Name","Email","Institution","Hackathon"])
+
+    path = "students.csv"
+    df.to_csv(path, index=False)
+
+    return send_file(path, as_attachment=True)
+
+@app.route("/edit-student/<int:student_id>", methods=["POST"])
+def edit_student(student_id):
+    name = request.form["name"]
+    email = request.form["email"]
+    college = request.form["college"]
+    frontend = request.form.get("frontend", 0)
+    backend = request.form.get("backend", 0)
+    comm = request.form.get("comm", 0)
+    lead = request.form.get("lead", 0)
+
+    cursor.execute("""
+        UPDATE HACKATHON_STUDENTS
+        SET STUDENT_NAME=:name, EMAIL_ID=:email, COLLEGE_NAME=:college,
+            FRONTEND_SKILL=:frontend, BACKEND_SKILL=:backend,
+            COMMUNICATION_SKILL=:comm, LEADERSHIP_SKILL=:lead
+        WHERE STUDENT_ID=:id
+    """, name=name, email=email, college=college,
+         frontend=frontend, backend=backend, comm=comm, lead=lead, id=student_id)
+    connection.commit()
+    flash("Student updated successfully")
+    return redirect("/admin/students")
+
+@app.route("/delete-student/<int:student_id>", methods=["POST"])
+def delete_student(student_id):
+    cursor.execute("DELETE FROM HACKATHON_STUDENTS WHERE STUDENT_ID=:id", id=student_id)
+    connection.commit()
+    flash("Student deleted successfully")
+    return redirect("/admin/students")
 
 # root redirect
 def index():

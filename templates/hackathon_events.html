@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeamUp Admin — Hackathons</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#080d0c;--surface:#0e1614;--surface2:#141f1c;--border:#1e2e2b;--accent:#00c9a7;--accent2:#ff6b35;--accent3:#ffd166;--text:#e0f0ed;--text-muted:#6a8a84;--sidebar-w:240px;--radius:14px;}
+  [data-theme="neon-ember"]{--accent:#00c9a7;--accent2:#ff6b35;--accent3:#ffd166;--bg:#080d0c;--surface:#0e1614;--surface2:#141f1c;--border:#1e2e2b;--text:#e0f0ed;--text-muted:#6a8a84;}
+  [data-theme="neon-ember-light"]{--accent:#00a88c;--accent2:#e85d2a;--accent3:#d4971a;--bg:#f0faf8;--surface:#ffffff;--surface2:#e8f7f3;--border:#c8e8e2;--text:#0a2420;--text-muted:#4a7a74;}
+  [data-theme="aurora"]{--accent:#7c6aff;--accent2:#ff6a9b;--accent3:#6affda;--bg:#0d0d12;--surface:#16161f;--surface2:#1e1e2a;--border:#2a2a3a;--text:#e8e8f0;--text-muted:#7a7a9a;}
+  [data-theme="aurora-light"]{--accent:#6c5ce7;--accent2:#fd79a8;--accent3:#00cec9;--bg:#f0f0f8;--surface:#ffffff;--surface2:#f5f5ff;--border:#e0e0ee;--text:#1a1a2e;--text-muted:#6b6b8a;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow:hidden;transition:background .4s,color .4s;}
+
+  /* SIDEBAR */
+  .sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:22px 14px;position:fixed;left:0;top:0;bottom:0;z-index:100;transition:transform .35s cubic-bezier(.4,0,.2,1),background .4s;overflow-y:auto;}
+  .sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 6px 24px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;}
+  .logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .admin-badge{display:flex;align-items:center;gap:10px;padding:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,transparent),color-mix(in srgb,var(--accent2) 5%,transparent));border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:var(--radius);margin-bottom:18px;}
+  .admin-avatar{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;}
+  .admin-info{flex:1;min-width:0;}
+  .admin-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .admin-role{font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;letter-spacing:.5px;text-transform:uppercase;}
+  .nav-label{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);padding:0 8px;margin-bottom:5px;margin-top:8px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--text-muted);font-size:13.5px;font-weight:500;position:relative;margin-bottom:2px;transition:background .2s,color .2s;border:1px solid transparent;}
+  .nav-item svg{width:17px;height:17px;stroke:currentColor;flex-shrink:0;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 15%,transparent),color-mix(in srgb,var(--accent2) 8%,transparent));color:var(--accent);border-color:color-mix(in srgb,var(--accent) 25%,transparent);}
+  .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--accent);border-radius:0 3px 3px 0;}
+  .nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
+  .theme-section{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);}
+  .theme-label{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:9px;display:flex;align-items:center;gap:6px;}
+  .theme-dots{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .theme-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .2s,border-color .2s;}
+  .theme-dot:hover{transform:scale(1.15);}
+  .theme-dot.active{border-color:var(--text);transform:scale(1.1);}
+  .theme-dot[data-t="neon-ember"]{background:linear-gradient(135deg,#00c9a7,#ff6b35);}
+  .theme-dot[data-t="neon-ember-light"]{background:linear-gradient(135deg,#a8f0e6,#ffb89a);border-color:var(--border);}
+  .theme-dot[data-t="aurora"]{background:linear-gradient(135deg,#7c6aff,#ff6a9b);}
+  .theme-dot[data-t="aurora-light"]{background:linear-gradient(135deg,#c5b8ff,#ffb3d1);border-color:var(--border);}
+  .logout-btn{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;color:#ff6a6a;font-size:13.5px;font-weight:500;text-decoration:none;transition:background .2s;border:1px solid transparent;}
+  .logout-btn svg{width:17px;height:17px;stroke:currentColor;flex-shrink:0;}
+  .logout-btn:hover{background:rgba(255,106,106,.1);border-color:rgba(255,106,106,.2);}
+
+  /* MAIN */
+  .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;overflow-y:auto;}
+  .topbar{padding:16px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10;backdrop-filter:blur(12px);transition:background .4s;gap:16px;}
+  .topbar-left{}
+  .topbar-greeting{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;background:linear-gradient(135deg,var(--text),var(--text-muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .topbar-greeting span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .topbar-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+
+  /* NEW EVENT BUTTON */
+  .btn-new{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,var(--accent2)));color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;border:none;border-radius:10px;cursor:pointer;transition:opacity .2s,transform .2s;letter-spacing:.3px;}
+  .btn-new:hover{opacity:.88;transform:translateY(-1px);}
+  .btn-new svg{width:16px;height:16px;stroke:currentColor;}
+
+  /* CONTENT */
+  .content{padding:24px 28px;display:flex;flex-direction:column;gap:22px;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+  /* FLASH */
+  .flash{padding:12px 18px;border-radius:10px;background:color-mix(in srgb,var(--accent3) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent3) 30%,transparent);color:var(--accent3);font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;animation:fadeUp .4s ease both;}
+  .flash::before{content:'✦';font-size:11px;}
+
+  /* CARDS GRID */
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px;}
+
+  .hack-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .3s,transform .3s,box-shadow .3s;animation:fadeUp .5s ease both;position:relative;}
+  .hack-card:nth-child(1){animation-delay:.05s}.hack-card:nth-child(2){animation-delay:.09s}.hack-card:nth-child(3){animation-delay:.13s}.hack-card:nth-child(4){animation-delay:.17s}.hack-card:nth-child(5){animation-delay:.21s}.hack-card:nth-child(6){animation-delay:.25s}
+  .hack-card:hover{border-color:color-mix(in srgb,var(--accent) 35%,transparent);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.25);}
+
+  .hack-card-header{padding:18px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px;}
+  .hack-emoji{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 15%,transparent),color-mix(in srgb,var(--accent2) 8%,transparent));border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);display:grid;place-items:center;font-size:19px;flex-shrink:0;}
+  .hack-header-info{flex:1;min-width:0;}
+  .hack-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;}
+  .hack-status-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.4px;text-transform:uppercase;}
+  .badge-active{background:rgba(16,185,129,.13);color:#10b981;}
+  .badge-active::before{content:'';width:5px;height:5px;background:#10b981;border-radius:50%;box-shadow:0 0 5px #10b981;}
+  .badge-closed{background:var(--border);color:var(--text-muted);}
+  .badge-upcoming{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
+
+  .hack-card-body{padding:16px 18px;}
+  .hack-meta-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-muted);margin-bottom:8px;}
+  .hack-meta-row svg{width:13px;height:13px;stroke:var(--text-muted);flex-shrink:0;}
+  .hack-meta-row strong{color:var(--text);font-weight:500;}
+  .hack-description{font-size:12.5px;color:var(--text-muted);line-height:1.6;margin-top:10px;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+  .hack-participants{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-muted);padding:10px 14px;background:var(--surface2);border-radius:9px;margin-bottom:14px;}
+  .hack-participants svg{width:14px;height:14px;stroke:var(--accent);}
+  .hack-participants span{color:var(--text);font-weight:600;font-family:'Syne',sans-serif;}
+
+  .hack-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn-view{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 14%,transparent),color-mix(in srgb,var(--accent2) 7%,transparent));border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);color:var(--accent);font-size:12px;font-weight:600;border-radius:9px;cursor:pointer;text-decoration:none;transition:background .2s,border-color .2s;font-family:'DM Sans',sans-serif;}
+  .btn-view:hover{background:color-mix(in srgb,var(--accent) 22%,transparent);}
+  .btn-view svg{width:13px;height:13px;stroke:currentColor;}
+  .btn-edit{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 13px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-size:12px;font-weight:500;border-radius:9px;cursor:pointer;transition:background .2s,color .2s;font-family:'DM Sans',sans-serif;}
+  .btn-edit:hover{background:var(--border);color:var(--text);}
+  .btn-edit svg{width:13px;height:13px;stroke:currentColor;}
+  .btn-delete{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 13px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#ef4444;font-size:12px;font-weight:500;border-radius:9px;cursor:pointer;transition:background .2s;font-family:'DM Sans',sans-serif;}
+  .btn-delete:hover{background:rgba(239,68,68,.15);}
+  .btn-delete svg{width:13px;height:13px;stroke:currentColor;}
+
+  /* MODAL OVERLAY */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px;width:440px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.5);animation:fadeUp .3s ease both;}
+  .modal-title{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+  .modal-title svg{width:18px;height:18px;stroke:var(--accent);}
+
+  .form-group{margin-bottom:14px;}
+  .form-label{font-size:11px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;display:block;}
+  .form-control{width:100%;padding:10px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:13.5px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
+  .form-control:focus{border-color:var(--accent);}
+  .form-control::placeholder{color:var(--text-muted);}
+  textarea.form-control{min-height:80px;resize:vertical;}
+  select.form-control option{background:var(--surface);color:var(--text);}
+
+  .modal-actions{display:flex;gap:10px;margin-top:20px;}
+  .btn-save{flex:1;padding:11px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,var(--accent2)));color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;border:none;border-radius:10px;cursor:pointer;transition:opacity .2s;}
+  .btn-save:hover{opacity:.85;}
+  .btn-cancel{padding:11px 18px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-size:13px;font-weight:500;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;}
+  .btn-cancel:hover{background:var(--border);}
+
+  /* MOBILE */
+  .mob-toggle{display:none;position:fixed;top:14px;left:14px;z-index:200;width:38px;height:38px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;place-items:center;}
+  .mob-toggle svg{width:18px;height:18px;stroke:var(--text);}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:#00000080;z-index:99;}
+  @media(max-width:700px){
+    .sidebar{transform:translateX(-100%)}.sidebar.open{transform:none}
+    .sidebar-overlay.open{display:block}.main{margin-left:0}
+    .mob-toggle{display:grid}.topbar{padding:12px 16px 12px 58px}
+    .content{padding:16px}
+  }
+</style>
+</head>
+<body>
+
+<button class="mob-toggle" id="mobToggle">
+  <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+<div class="sidebar-overlay" id="overlay"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">T</div>
+    <div class="logo-text">TeamUp</div>
+  </div>
+
+  <div class="admin-badge">
+    <div class="admin-avatar">A</div>
+    <div class="admin-info">
+      <div class="admin-name">Admin</div>
+      <div class="admin-role">Administrator</div>
+    </div>
+  </div>
+
+  <div class="nav-label">Overview</div>
+  <a class="nav-item" href="{{ url_for('admin_dashboard') }}">
+    <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Dashboard
+  </a>
+  <a class="nav-item" href="{{ url_for('admin_students') }}">
+    <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+    Students
+    <span class="nav-badge">{{ total_students }}</span>
+  </a>
+  <a class="nav-item active" href="{{ url_for('hackathon_events') }}">
+    <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Hackathons
+    <span class="nav-badge" style="background:var(--accent2)">{{ total_hackathons }}</span>
+  </a>
+
+
+  <div class="theme-section">
+    <div class="theme-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      Theme
+    </div>
+    <div class="theme-dots">
+      <div class="theme-dot active" data-t="neon-ember" title="Neon Ember" onclick="setTheme('neon-ember',this)"></div>
+      <div class="theme-dot" data-t="neon-ember-light" title="Neon Ember Light" onclick="setTheme('neon-ember-light',this)"></div>
+      <div class="theme-dot" data-t="aurora" title="Aurora" onclick="setTheme('aurora',this)"></div>
+      <div class="theme-dot" data-t="aurora-light" title="Aurora Light" onclick="setTheme('aurora-light',this)"></div>
+    </div>
+    <a href="{{ url_for('admin_login') }}" class="logout-btn">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Logout
+    </a>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-greeting">Hackathon <span>Events</span> ⚡</div>
+      <div class="topbar-sub">Manage all hackathon events, teams, and registrations</div>
+    </div>
+    <button class="btn-new" onclick="openModal()">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+      New Event
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="flash">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- CARDS GRID -->
+    <div class="cards-grid">
+      {% for h in hackathons %}
+      <div class="hack-card">
+        <div class="hack-card-header">
+          <div class="hack-emoji">⚡</div>
+          <div class="hack-header-info">
+            <div class="hack-name">{{ h.name }}</div>
+            <div class="hack-status-badge {% if h.status=='Active' %}badge-active{% elif h.status=='Upcoming' %}badge-upcoming{% else %}badge-closed{% endif %}">
+              {{ h.status }}
+            </div>
+          </div>
+        </div>
+
+        <div class="hack-card-body">
+          <div class="hack-meta-row">
+            <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <strong>{{ h.date }}</strong>
+          </div>
+          <div class="hack-meta-row">
+            <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <strong>{{ h.venue }}</strong>
+          </div>
+          <div class="hack-description">{{ h.description }}</div>
+
+          <div class="hack-participants">
+            <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+            <span>{{ h.count }}</span>&nbsp;participants registered
+          </div>
+
+          <div class="hack-actions">
+            <a href="/admin/view-teams/{{ h.name }}" class="btn-view">
+              <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              View Teams
+            </a>
+            <button class="btn-edit" onclick="openEditModal('{{ h.id }}',`{{ h.name }}`,'{{ h.date }}',`{{ h.venue }}`,`{{ h.description }}`,'{{ h.status }}')">
+              <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              Edit
+            </button>
+            <button class="btn-delete" onclick="confirmDelete('{{ h.id }}')">
+              <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== ADD MODAL ===== -->
+<div class="modal-overlay" id="addModalOverlay">
+  <div class="modal">
+    <div class="modal-title">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Add Hackathon
+    </div>
+    <form action="/add_hackathon" method="POST">
+      <div class="form-group">
+        <label class="form-label">Hackathon Name</label>
+        <input type="text" name="name" class="form-control" placeholder="e.g. InnovateTech 2025" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" name="date" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Venue</label>
+        <input type="text" name="venue" class="form-control" placeholder="e.g. Main Auditorium, Block A" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" placeholder="Brief description of the event..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-control">
+          <option>Active</option>
+          <option>Closed</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-save" type="submit">Save Event</button>
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== EDIT MODAL ===== -->
+<div class="modal-overlay" id="editModalOverlay">
+  <div class="modal">
+    <div class="modal-title">
+      <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      Edit Hackathon
+    </div>
+    <form action="/update_hackathon" method="POST">
+      <input type="hidden" name="id" id="editId">
+      <div class="form-group">
+        <label class="form-label">Hackathon Name</label>
+        <input type="text" name="name" id="editName" class="form-control" placeholder="Hackathon Name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" name="date" id="editDate" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Venue</label>
+        <input type="text" name="venue" id="editVenue" class="form-control" placeholder="Venue / Location" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" id="editDescription" class="form-control" placeholder="Hackathon Description"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select name="status" id="editStatus" class="form-control">
+          <option value="">Select Status</option>
+          <option>Active</option>
+          <option>Closed</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-save" type="submit">Update Event</button>
+        <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  /* THEME */
+  function setTheme(t, el) {
+    document.body.setAttribute('data-theme', t);
+    document.querySelectorAll('.theme-dot').forEach(d=>d.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  /* MOBILE */
+  const sb = document.getElementById('sidebar'), ov = document.getElementById('overlay');
+  document.getElementById('mobToggle').addEventListener('click', ()=>{ sb.classList.toggle('open'); ov.classList.toggle('open'); });
+  ov.addEventListener('click', ()=>{ sb.classList.remove('open'); ov.classList.remove('open'); });
+
+  /* ADD MODAL */
+  function openModal(){ document.getElementById("addModalOverlay").classList.add("open"); }
+  function closeModal(){ document.getElementById("addModalOverlay").classList.remove("open"); }
+
+  /* EDIT MODAL */
+  function openEditModal(id,name,date,venue,description,status){
+    document.getElementById("editModalOverlay").classList.add("open");
+    document.getElementById("editId").value=id;
+    document.getElementById("editName").value=name;
+    document.getElementById("editDate").value=date;
+    document.getElementById("editVenue").value=venue;
+    document.getElementById("editDescription").value=description;
+    document.getElementById("editStatus").value=status;
+  }
+  function closeEditModal(){ document.getElementById("editModalOverlay").classList.remove("open"); }
+
+  /* CLOSE ON OVERLAY CLICK */
+  document.getElementById("addModalOverlay").addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+  document.getElementById("editModalOverlay").addEventListener('click', function(e){ if(e.target===this) closeEditModal(); });
+
+  /* DELETE */
+  function confirmDelete(id){
+    if(confirm("Are you sure you want to delete this hackathon?")){
+      window.location.href="/delete_hackathon/"+id;
+    }
+  }
+</script>
+</body>
+</html>
