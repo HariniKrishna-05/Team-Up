@@ -226,7 +226,7 @@
           <div class="hack-emoji">⚡</div>
           <div class="hack-header-info">
             <div class="hack-name">{{ h.name }}</div>
-            <div class="hack-status-badge {% if h.status=='Active' %}badge-active{% elif h.status=='Upcoming' %}badge-upcoming{% else %}badge-closed{% endif %}">
+            <div class="hack-status-badge {% if h.status=='ACTIVE' %}badge-active{% elif h.status=='CLOSED' %}badge-closed{% else %}badge-upcoming{% endif %}">
               {{ h.status }}
             </div>
           </div>
@@ -258,8 +258,11 @@
               Edit
             </button>
             <button class="btn-delete" onclick="confirmDelete('{{ h.id }}')">
-              <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              Delete
+                <svg fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Delete
             </button>
           </div>
         </div>
@@ -384,10 +387,16 @@
   document.getElementById("editModalOverlay").addEventListener('click', function(e){ if(e.target===this) closeEditModal(); });
 
   /* DELETE */
-  function confirmDelete(id){
-    if(confirm("Are you sure you want to delete this hackathon?")){
-      window.location.href="/delete_hackathon/"+id;
-    }
+    function confirmDelete(hackathonId) {
+      if (confirm("Are you sure you want to delete this hackathon? This action cannot be undone.")) {
+          // Create a form dynamically
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = `/delete-hackathon/${hackathonId}`;
+
+          document.body.appendChild(form);
+          form.submit();
+      }
   }
 </script>
 </body>

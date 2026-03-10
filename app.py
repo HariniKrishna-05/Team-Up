@@ -1,10 +1,12 @@
 import os
 import math
 from flask import Flask, render_template, request, redirect, session, flash, jsonify
+from flask import *
 import oracledb
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import random, smtplib, datetime
+from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
@@ -35,6 +37,39 @@ connection = oracledb.connect(
 )
 cursor = connection.cursor()
 
+# ----------------- Activity Logger -----------------
+from datetime import datetime
+
+def log_activity(description):
+    cursor.execute("""
+        INSERT INTO ACTIVITY_LOG (DESCRIPTION)
+        VALUES (:activity)
+    """, {"activity": description})
+    
+    connection.commit()
+
+# -------- Time Ago Formatter --------
+def time_ago(time):
+    now = datetime.now()
+    diff = now - time
+
+    seconds = diff.total_seconds()
+
+    if seconds < 60:
+        return "just now"
+
+    elif seconds < 3600:
+        minutes = int(seconds/60)
+        return f"{minutes} minutes ago"
+
+    elif seconds < 86400:
+        hours = int(seconds/3600)
+        return f"{hours} hours ago"
+
+    else:
+        days = int(seconds/86400)
+        return f"{days} days ago"
+    
 # ----------------- Helper: Send OTP Email -----------------
 def send_otp_email(receiver_email, otp):
     """Send a one‑time password via email. Environment variables must define
@@ -84,6 +119,8 @@ def signup():
             """, name=name, email=email, institution=institution, password=password)
             connection.commit()
 
+            log_activity(f"{name} registered into our TeamUp application")# Log the signup activity
+
             # Retrieve the auto-generated STUDENT_ID
             cursor.execute("SELECT MAX(STUDENT_ID) FROM HACKATHON_STUDENTS WHERE EMAIL_ID = :email", email=email)
             student_id = cursor.fetchone()[0]
@@ -110,7 +147,7 @@ def signup():
 
         # Generate OTP
         otp = str(random.randint(100000, 999999))
-        expiry = datetime.datetime.now() + datetime.timedelta(minutes=10)
+        expiry = datetime.now() + timedelta(minutes=10)
         cursor.execute("""
             INSERT INTO OTP_VERIFICATION (STUDENT_ID, OTP, EXPIRY_TIME)
             VALUES (:student_id, :otp, :expiry_time)
@@ -142,13 +179,14 @@ def verify_otp():
         if otp_record:
             otp_db, expiry_time = otp_record
             expiry_time = expiry_time  # Oracle DATE to Python datetime
-            if otp_db == otp_input and expiry_time > datetime.datetime.now():
+            if otp_db == otp_input and expiry_time >datetime.now():
                 # HACKATHON_STUDENTS doesn't have IS_VERIFIED, so we'll just mark OTP as used by storing in session
                 flash("Email verified! Please login.")
                 return redirect('/login')
         flash("Invalid or expired OTP")
     return render_template('verify_otp.html')
 
+# Resend OTP
 @app.route('/resend-otp')
 def resend_otp():
     student_id = session.get('student_id')
@@ -160,7 +198,7 @@ def resend_otp():
     if row:
         email = row[0]
         otp = str(random.randint(100000, 999999))
-        expiry = datetime.datetime.now() + datetime.timedelta(minutes=10)
+        expiry = datetime.now() + timedelta(minutes=10)
         cursor.execute("""
             INSERT INTO OTP_VERIFICATION (STUDENT_ID, OTP, EXPIRY_TIME)
             VALUES (:student_id, :otp, :expiry_time)
@@ -200,7 +238,7 @@ def forgot_password():
             return redirect('/forgot-password')
         student_id = row[0]
         otp = str(random.randint(100000, 999999))
-        expiry = datetime.datetime.now() + datetime.timedelta(minutes=10)
+        expiry = datetime.now() + timedelta(minutes=10)
         cursor.execute("""
             INSERT INTO OTP_VERIFICATION (STUDENT_ID, OTP, EXPIRY_TIME)
             VALUES (:student_id, :otp, :expiry_time)
@@ -229,7 +267,7 @@ def reset_password():
         otp_record = cursor.fetchone()
         if otp_record:
             otp_db, expiry_time = otp_record
-            if otp_db == otp_input and expiry_time > datetime.datetime.now():
+            if otp_db == otp_input and expiry_time > datetime.now():
                 hashed = generate_password_hash(new_password)
                 cursor.execute("UPDATE HACKATHON_STUDENTS SET PASS_WORD=:pwd WHERE STUDENT_ID=:student_id", pwd=hashed, student_id=student_id)
                 connection.commit()
@@ -328,6 +366,7 @@ def edit_profile():
         })
 
         connection.commit()
+        log_activity(f"{name} student record updated")# Log the profile update activity
         session['student_name'] = name
         flash("Profile updated successfully!")
         return redirect("/profile")
@@ -353,7 +392,7 @@ def edit_profile():
         bio=student[7],
     )
 
-# Logout
+#----LOGOUT----
 @app.route('/logout')
 def logout():
     session.clear()
@@ -406,7 +445,7 @@ def init_db():
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@teamup.com")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
-# Admin Login
+#------------------ Admin Login -----------------
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     error = None
@@ -420,28 +459,50 @@ def admin_login():
         error = "Invalid admin credentials."
     return render_template('admin_login.html', error=error)
 
-# Admin Logout
+#---------------------- Admin Logout -----------------
 @app.route('/admin/logout')
 def admin_logout():
     session.pop('admin', None)
     session.pop('is_admin', None)
     return redirect('/admin/login')
 
-# Admin Dashboard (placeholder)
+#----------------------- Admin Dashboard -----------------
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
     with connection.cursor() as cursor:
 
-        # ---- TOTAL STUDENTS ----
+        # TOTAL STUDENTS
         cursor.execute("SELECT COUNT(*) FROM HACKATHON_STUDENTS")
         total_students = cursor.fetchone()[0]
 
-        # ---- TOTAL HACKATHONS ----
+        # TOTAL HACKATHONS
         cursor.execute("SELECT COUNT(*) FROM HACKATHONS")
         total_hackathons = cursor.fetchone()[0]
 
-        # ---- PARTICIPANTS ----
+        # LATEST 4 HACKATHONS
+        cursor.execute("""
+            SELECT HACKATHON_NAME,
+                   TO_CHAR(HACKATHON_DATE,'Mon DD'),
+                   STATUS
+            FROM HACKATHONS
+            WHERE UPPER(STATUS) = 'ACTIVE'
+            ORDER BY HACKATHON_DATE DESC, HACKATHON_ID DESC
+            FETCH FIRST 4 ROWS ONLY
+        """)
+
+        hackathons = cursor.fetchall()
+
+        recent_hackathons = [
+            {
+                "name": h[0],
+                "date": h[1],
+                "status": h[2]
+            }
+            for h in hackathons
+        ]
+
+        # PARTICIPANTS
         cursor.execute("""
             SELECT COUNT(*)
             FROM HACKATHON_STUDENTS
@@ -449,7 +510,7 @@ def admin_dashboard():
         """)
         total_participants = cursor.fetchone()[0]
 
-        # ---- TEAMS GENERATED ----
+        # TEAMS GENERATED
         cursor.execute("""
             SELECT COUNT(DISTINCT TEAM_ID)
             FROM HACKATHON_STUDENTS
@@ -457,26 +518,82 @@ def admin_dashboard():
         """)
         teams_generated = cursor.fetchone()[0]
 
+        cursor.execute("""
+            SELECT DESCRIPTION, CREATED_AT
+            FROM ACTIVITY_LOG
+            ORDER BY CREATED_AT DESC
+            FETCH FIRST 5 ROWS ONLY
+        """)
+
+        rows = cursor.fetchall()
+
+        recent_activities = []
+
+        for r in rows:
+            recent_activities.append({
+                "text": r[0],
+                "time": time_ago(r[1])
+            })
+
     return render_template(
         "admin_dash.html",
         admin_name="Admin",
         time_greeting="Welcome...",
-        today_date=datetime.datetime.now().strftime("%A, %d %B %Y"),
-
-        total_students=total_students,
-        student_growth=0,
-
-        total_hackathons=total_hackathons,
-        hackathon_new=0,
 
         total_participants=total_participants,
-        participant_pct=0,
 
-        teams_generated=teams_generated
+        total_students=total_students,
+        
+        total_hackathons=total_hackathons,
+
+        teams_generated=teams_generated,
+
+        recent_hackathons=recent_hackathons,
+
+        recent_activities=recent_activities
+
     )
 
-# ==================== TEAM MANAGEMENT ROUTES ====================
 
+#----------------------- Admin Activity Log -----------------
+@app.route('/admin/activity')
+def admin_activity():
+
+    cursor.execute("""
+        SELECT DESCRIPTION, CREATED_AT
+        FROM ACTIVITY_LOG
+        ORDER BY CREATED_AT DESC
+    """)
+
+    rows = cursor.fetchall()
+
+    activities = []
+
+    for desc, time in rows:
+        now = datetime.now()
+        diff = now - time
+
+        minutes = int(diff.total_seconds() / 60)
+
+        if minutes < 1:
+            ago = "just now"
+        elif minutes == 1:
+            ago = "1 minute ago"
+        elif minutes < 60:
+            ago = f"{minutes} minutes ago"
+        else:
+            hours = minutes // 60
+            ago = f"{hours} hours ago"
+
+        activities.append({
+            "desc": desc,
+            "time": ago
+        })
+
+    return render_template("admin_activity.html", activities=activities)
+
+# ==================== TEAM MANAGEMENT ROUTES ====================
+# These routes call the backend logic for role assignment, clustering, and team formation, and then redirect to the team display page.
 @app.route('/assign-roles')
 def assign_roles_route():
     """Assign roles to all students based on their skills"""
@@ -491,7 +608,7 @@ def assign_roles_route():
         flash(f"Error assigning roles: {str(e)}")
     
     return redirect('/view-teams')
-
+# Note: Clustering should ideally be done before team formation, as it assigns cluster IDs that the team formation logic relies on.
 @app.route('/clustering')
 def clustering_route():
     """Perform K-Means clustering of students by skills"""
@@ -506,7 +623,7 @@ def clustering_route():
         flash(f"Error during clustering: {str(e)}")
     
     return redirect('/view-teams')
-
+# Team formation should be done after roles are assigned and clustering is performed, as it relies on that data to create balanced teams.
 @app.route('/form-teams')
 def form_teams_route():
     """Form balanced teams from students"""
@@ -515,13 +632,24 @@ def form_teams_route():
     
     try:
         form_balanced_role_teams(cursor, connection)
+        cursor.execute("""
+            SELECT DISTINCT HACKATHON_PREFERENCE
+            FROM HACKATHON_STUDENTS
+            WHERE TEAM_ID IS NOT NULL
+        """)
+
+        row = cursor.fetchone()
+
+        if row:
+            hackathon = row[0]
+            log_activity(f"Teams generated successfully for {hackathon}")# Log the team formation activity with hackathon name
         flash("Teams formed successfully")
     except Exception as e:
         app.logger.exception("Error forming teams")
         flash(f"Error forming teams: {str(e)}")
     
     return redirect('/view-teams')
-
+#------------------ View Teams -----------------
 @app.route('/view-teams')
 def view_teams_route():
     """Display all teams organized by hackathon"""
@@ -535,7 +663,7 @@ def view_teams_route():
         app.logger.exception("Error retrieving teams")
         flash(f"Error retrieving teams: {str(e)}")
         return redirect('/dashboard')
-
+#------------------ Backend Logic for Team Formation (called by route) -----------------
 @app.route('/team-setup')
 def team_setup():
     """Admin page to setup teams (assign roles → cluster → form teams)"""
@@ -543,7 +671,7 @@ def team_setup():
         return redirect('/login')
     
     return render_template('team_setup.html')
-
+# This route can be called by buttons on the team_setup.html page to trigger each step of the process. The actual logic is in the backend modules.
 @app.route('/api/teams-json')
 def teams_json():
     """API endpoint to get teams as JSON"""
@@ -563,40 +691,59 @@ def teams_json():
 # ----------------- Hackathon Management -----------------
 @app.route('/hackathon_events')
 def hackathon_events():
-    cursor.execute("""
-    SELECT h.HACKATHON_ID,
-           h.HACKATHON_NAME,
-           TO_CHAR(h.HACKATHON_DATE,'YYYY-MM-DD'),
-           h.VENUE,
-           h.DESCRIPTION,
-           h.STATUS,
-           NVL(COUNT(s.STUDENT_ID),0) AS TOTAL_REGISTERED
-    FROM HACKATHONS h
-    LEFT JOIN HACKATHON_STUDENTS s
-        ON h.HACKATHON_NAME = s.HACKATHON_PREFERENCE
-    GROUP BY h.HACKATHON_ID,
-             h.HACKATHON_NAME,
-             h.HACKATHON_DATE,
-             h.VENUE,
-             h.DESCRIPTION,
-             h.STATUS
-    ORDER BY h.HACKATHON_DATE
-""")
-    hackathons = cursor.fetchall()
-    hackathon_list = [
-    {
-        'id': h[0],
-        'name': h[1],
-        'date': h[2],
-        'venue': h[3],
-        'description': h[4],
-        'status': h[5],
-        'count': h[6]   # NEW
-    }
-    for h in hackathons
-]
-    return render_template("hackathon_events.html", hackathons=hackathon_list)
 
+    # -------- SIDEBAR COUNTS --------
+    cursor.execute("SELECT COUNT(*) FROM HACKATHON_STUDENTS")
+    total_students = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM HACKATHONS")
+    total_hackathons = cursor.fetchone()[0]
+
+    # -------- HACKATHON LIST --------
+    cursor.execute("""
+        SELECT h.HACKATHON_ID,
+               h.HACKATHON_NAME,
+               TO_CHAR(h.HACKATHON_DATE,'YYYY-MM-DD'),
+               h.VENUE,
+               h.DESCRIPTION,
+               h.STATUS,
+               NVL(COUNT(s.STUDENT_ID),0) AS TOTAL_REGISTERED
+        FROM HACKATHONS h
+        LEFT JOIN HACKATHON_STUDENTS s
+            ON h.HACKATHON_NAME = s.HACKATHON_PREFERENCE
+        GROUP BY h.HACKATHON_ID,
+                 h.HACKATHON_NAME,
+                 h.HACKATHON_DATE,
+                 h.VENUE,
+                 h.DESCRIPTION,
+                 h.STATUS
+        ORDER BY h.HACKATHON_DATE
+    """)
+
+    hackathons = cursor.fetchall()
+
+    hackathon_list = [
+        {
+            'id': h[0],
+            'name': h[1],
+            'date': h[2],
+            'venue': h[3],
+            'description': h[4],
+            'status': h[5],
+            'count': h[6]
+        }
+        for h in hackathons
+    ]
+
+    return render_template(
+        "hackathon_events.html",
+        hackathons=hackathon_list,
+
+        # ⭐ sidebar values
+        total_students=total_students,
+        total_hackathons=total_hackathons
+    )
+#------------------ Backend Logic for Team Formation (called by route) -----------------
 @app.route('/add_hackathon', methods=['POST'])
 def add_hackathon():
     try:
@@ -612,6 +759,7 @@ def add_hackathon():
             VALUES (:1, TO_DATE(:2,'YYYY-MM-DD'), :3, :4, :5)
         """, (name, date, venue, description, status))
         connection.commit()
+        log_activity(f"New hackathon {name} created")# Log the creation of a new hackathon
         flash("Hackathon added successfully")
     except Exception as e:
         app.logger.exception("Failed to add hackathon")
@@ -620,7 +768,7 @@ def add_hackathon():
     # Redirect to the dashboard to reload the latest hackathons
     return redirect('/hackathon_events')
 
-
+#------------------ Update and Delete Hackathon -----------------
 @app.route('/update_hackathon', methods=['POST'])
 def update_hackathon():
     hackathon_id = request.form['id']
@@ -640,18 +788,47 @@ def update_hackathon():
         WHERE HACKATHON_ID = :6
     """, (name, date, venue, description, status, hackathon_id))
     connection.commit()
+
+    log_activity(f"{name} hackathon is updated")# Log the update of a hackathon (name variable should be defined in the context where this route is called, or you can fetch the name before update for logging)log_activity(f"{hackathon_name} hackathon is updated")# Log the update of a hackathon (hackathon_name variable should be defined in the context where this route is called, or you can fetch the name before update for logging)
     
     flash("Hackathon updated successfully")
     return redirect('/hackathon_events')
 
+#------------------ Delete Hackathon -----------------
+@app.route("/delete-hackathon/<int:hackathon_id>", methods=["POST"])
+def delete_hackathon(hackathon_id):
+    # 1️⃣ Fetch hackathon name first
+    cursor.execute(
+        "SELECT HACKATHON_NAME FROM HACKATHONS WHERE HACKATHON_ID=:id",
+        {"id": hackathon_id}
+    )
+    row = cursor.fetchone()
+    hackathon_name = row[0] if row else None  # None if hackathon not found
 
-@app.route('/delete_hackathon/<int:id>')
-def delete_hackathon(id):
-    cursor.execute("DELETE FROM HACKATHONS WHERE HACKATHON_ID = :1", (id,))
+    if not hackathon_name:
+        flash("Hackathon not found!")
+        return redirect("/hackathon_events")
+
+    # 2️⃣ Delete students who selected this hackathon
+    cursor.execute(
+        "DELETE FROM HACKATHON_STUDENTS WHERE HACKATHON_PREFERENCE=:name",
+        {"name": hackathon_name}
+    )
+
+    # 3️⃣ Delete the hackathon itself
+    cursor.execute(
+        "DELETE FROM HACKATHONS WHERE HACKATHON_ID=:id",
+        {"id": hackathon_id}
+    )
+
     connection.commit()
-    
+
+    # 4️⃣ Log activity
+    log_activity(f"{hackathon_name} hackathon is deleted from the hackathon list")
+
+    # 5️⃣ Flash success message
     flash("Hackathon deleted successfully")
-    return redirect('/hackathon_events')
+    return redirect("/hackathon_events")
 # ---------------- ADMIN VIEW TEAMS ----------------
 @app.route('/admin/view-teams/<hackathon_name>')
 def view_teams(hackathon_name):
@@ -660,6 +837,14 @@ def view_teams(hackathon_name):
 
     cursor = connection.cursor()
 
+    # -------- SIDEBAR COUNTS --------
+    cursor.execute("SELECT COUNT(*) FROM HACKATHON_STUDENTS")
+    total_students = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM HACKATHONS")
+    total_hackathons = cursor.fetchone()[0]
+
+    # -------- GET STUDENTS FOR THIS HACKATHON --------
     query = """
         SELECT
             STUDENT_NAME,
@@ -675,7 +860,7 @@ def view_teams(hackathon_name):
     cursor.execute(query, {"hackathon_name": hackathon_name})
     rows = cursor.fetchall()
 
-    # ---------------- GROUP BY TEAM ----------------
+    # -------- GROUP BY TEAM --------
     teams = {}
 
     for row in rows:
@@ -694,7 +879,7 @@ def view_teams(hackathon_name):
 
         teams[team_id].append(member)
 
-    # ---------------- SEARCH LOGIC ----------------
+    # -------- SEARCH FUNCTION --------
     if search:
 
         matched_team_id = None
@@ -710,14 +895,15 @@ def view_teams(hackathon_name):
             if matched_team_id:
                 break
 
-        # Move searched student to TOP inside team
+        # Move searched student to top
         if matched_team_id is not None:
             members = teams[matched_team_id]
             member = members.pop(matched_member_index)
             members.insert(0, member)
 
-            # Move that TEAM to FIRST
+            # Move that team to top
             ordered = {matched_team_id: members}
+
             for tid, mem in teams.items():
                 if tid != matched_team_id:
                     ordered[tid] = mem
@@ -729,8 +915,11 @@ def view_teams(hackathon_name):
     return render_template(
         "teams.html",
         teams=teams,
-        hackathon=hackathon_name
+        hackathon=hackathon_name,
+        total_students=total_students,
+        total_hackathons=total_hackathons
     )
+ #---------------- ADMIN STUDENT MANAGEMENT ----------------
 @app.route('/admin/students')
 def admin_students():
 
@@ -742,6 +931,13 @@ def admin_students():
     per_page = 9
     offset = (page - 1) * per_page
 
+    # ---------------- TOTAL COUNTS FOR SIDEBAR ----------------
+    cursor.execute("SELECT COUNT(*) FROM HACKATHON_STUDENTS")
+    total_students = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM HACKATHONS")
+    total_hackathons = cursor.fetchone()[0]
+
     # ---------------- BASE QUERY ----------------
     base_query = """
         FROM HACKATHON_STUDENTS
@@ -750,7 +946,6 @@ def admin_students():
 
     params = {}
 
-    # 🔎 Search filter
     if search:
         base_query += """
         AND (LOWER(STUDENT_NAME) LIKE :search
@@ -758,24 +953,22 @@ def admin_students():
         """
         params["search"] = f"%{search.lower()}%"
 
-    # 🎓 Institution filter
     if institution:
         base_query += " AND COLLEGE_NAME = :institution"
         params["institution"] = institution
 
-    # 🏆 Hackathon filter
     if hackathon:
         base_query += " AND HACKATHON_PREFERENCE = :hackathon"
         params["hackathon"] = hackathon
 
-    # ---------------- GET TOTAL COUNT (IMPORTANT FIX) ----------------
+    # ---------------- TOTAL STUDENTS COUNT ----------------
     count_query = "SELECT COUNT(*) " + base_query
     cursor.execute(count_query, params)
     total = cursor.fetchone()[0]
 
     total_pages = max(1, math.ceil(total / per_page))
 
-    # ---------------- FETCH PAGINATED DATA ----------------
+    # ---------------- FETCH STUDENTS ----------------
     data_query = f"""
         SELECT
             STUDENT_ID,
@@ -814,8 +1007,13 @@ def admin_students():
         total_pages=total_pages,
         search=search,
         institution=institution,
-        hackathon=hackathon
+        hackathon=hackathon,
+
+        # ⭐ ADD THESE
+        total_students=total_students,
+        total_hackathons=total_hackathons
     )
+ #---------------- EXPORT STUDENTS CSV ----------------
 @app.route("/export-csv")
 def export_csv():
 
@@ -835,7 +1033,7 @@ def export_csv():
     df.to_csv(path, index=False)
 
     return send_file(path, as_attachment=True)
-
+ #---------------- EDIT STUDENT ----------------
 @app.route("/edit-student/<int:student_id>", methods=["POST"])
 def edit_student(student_id):
     name = request.form["name"]
@@ -857,11 +1055,30 @@ def edit_student(student_id):
     connection.commit()
     flash("Student updated successfully")
     return redirect("/admin/students")
-
+ #---------------- DELETE STUDENT ----------------
 @app.route("/delete-student/<int:student_id>", methods=["POST"])
 def delete_student(student_id):
+
+    # Get student name first
+    cursor.execute("SELECT STUDENT_NAME FROM HACKATHON_STUDENTS WHERE STUDENT_ID=:id", {"id": student_id})
+    row = cursor.fetchone()
+
+    if row:
+        student_name = row[0]
+    else:
+        student_name = "Unknown Student"
+
+    # delete child records first
+    cursor.execute("DELETE FROM OTP_VERIFICATION WHERE STUDENT_ID=:id", id=student_id)
+
+    # delete student
     cursor.execute("DELETE FROM HACKATHON_STUDENTS WHERE STUDENT_ID=:id", id=student_id)
+
     connection.commit()
+
+    # log activity
+    log_activity(f"{student_name} deleted from the student list")
+
     flash("Student deleted successfully")
     return redirect("/admin/students")
 
@@ -870,7 +1087,7 @@ def index():
     if 'student_id' in session:
         return redirect('/dashboard')
     return redirect('/login')
-
+#----------------- Home Route -----------------
 @app.route('/')
 def home():
     return index()
