@@ -10,7 +10,14 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
+from backend.db_connection import get_connection
+from backend.role_assignment import assign_roles
+from backend.clustering import perform_hackathon_clustering
+from backend.team_formation import form_balanced_role_teams
 import pandas as pd
+import time
+import uuid
+
 
 # Import backend modules using absolute path
 import sys
@@ -29,6 +36,43 @@ load_dotenv()  # load variables from .env
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "teamup123")
 
+# ---------------- GLOBAL TEMPLATE VARIABLE ----------------
+@app.context_processor
+def inject_user():
+    project_count = 0
+    student_id = session.get('student_id')
+
+    if student_id:
+        try:
+            cur = connection.cursor()   # ✅ NEW cursor
+
+            cur.execute("""
+                SELECT COUNT(*)
+                FROM STUDENT_PROJECTS
+                WHERE STUDENT_ID = :sid
+            """, {"sid": student_id})
+
+            project_count = cur.fetchone()[0]
+            cur.close()  # ✅ close cursor
+
+        except Exception as e:
+            print("Error:", e)
+            project_count = 0
+
+    return dict(
+        name=session.get("student_name"),
+        project_count=project_count
+    )
+# File upload configuration
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+ALLOWED_EXTENSIONS = {"png","jpg","jpeg","gif","zip","pdf","mp4"}
+
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# helper to check allowed file extensions
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+
 # ----------------- Oracle SQL Connection -----------------
 connection = oracledb.connect(
     user=os.environ.get("ORACLE_USER", "system"),
@@ -36,6 +80,29 @@ connection = oracledb.connect(
     dsn=os.environ.get("ORACLE_DSN", "localhost:1521/XEPDB1")
 )
 cursor = connection.cursor()
+
+#----------------- Fetch Recent Hackathons -----------------
+def get_recent_hackathons(limit=None):
+    query = """
+        SELECT 
+            HACKATHON_ID,
+            HACKATHON_NAME,
+            HACKATHON_DATE,
+            VENUE,
+            DESCRIPTION,
+            STATUS
+        FROM HACKATHONS
+        ORDER BY HACKATHON_DATE ASC
+    """
+
+    if limit:
+        query += f" FETCH FIRST {limit} ROWS ONLY"
+
+    cursor.execute(query)
+
+    columns = [col[0].lower() for col in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
 
 # ----------------- Activity Logger -----------------
 from datetime import datetime
@@ -222,6 +289,9 @@ def login():
         if student and check_password_hash(student[2], password):
             session['student_id'] = student[0]
             session['student_name'] = student[1]
+            name = student[1]
+            log_activity(f"{name} logged into the TeamUp application")
+
             return redirect('/dashboard')
         flash("Invalid login or email not verified")
     return render_template('login.html')
@@ -281,9 +351,31 @@ def reset_password():
 def dashboard():
     if 'student_id' not in session:
         return redirect('/login')
-    # fall back to empty string if name not set (e.g. user bypassed login)
-    name = session.get('student_name', "")
-    return render_template('dashboard.html', name=name)
+
+    name = session['student_name']
+    student_id = session['student_id']
+
+    # ✅ Latest hackathons
+    hackathons = get_recent_hackathons(4)
+
+    # ✅ Fetch latest 3 projects (IMPORTANT)
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT project_title, tech_stack, project_status, created_at
+        FROM STUDENT_PROJECTS
+        WHERE student_id = :id
+        ORDER BY created_at DESC
+        FETCH FIRST 4 ROWS ONLY
+    """, {'id': student_id})
+
+    projects = cursor.fetchall()
+
+    return render_template(
+        'dashboard.html',
+        name=name,
+        hackathons=hackathons,
+        projects=projects
+    )
 
 # ---------------- PROFILE VIEW ----------------
 @app.route("/profile")
@@ -299,7 +391,7 @@ def view_profile():
                LINKEDIN_LINK, BIO
         FROM HACKATHON_STUDENTS
         WHERE STUDENT_ID = :id
-    """, id=student_id)
+    """, {"id": student_id})
 
     student = cursor.fetchone()
 
@@ -378,7 +470,7 @@ def edit_profile():
                LINKEDIN_LINK, BIO
         FROM HACKATHON_STUDENTS
         WHERE STUDENT_ID = :id
-    """, id=student_id)
+    """, {"id": student_id})
     student = cursor.fetchone()
 
     return render_template("edit_profile.html",
@@ -441,6 +533,509 @@ def init_db():
     flash('Database initialization attempted: ' + '; '.join(results))
     return redirect('/')
 
+
+#----------------- Add Project Route -----------------
+@app.route("/add_project", methods=["GET", "POST"])
+def add_project():
+    if 'student_id' not in session:
+        return redirect('/login')
+
+    student_id = session['student_id']
+
+    if request.method == "POST":
+        title = request.form.get("title")
+        description = request.form.get("description")
+
+        # -------- Project File --------
+        project_file = request.files.get("file")
+        file_name = None
+
+        if project_file and project_file.filename != "" and allowed_file(project_file.filename):
+            filename = secure_filename(project_file.filename)
+            ext = filename.rsplit('.', 1)[1]
+            file_name = f"{student_id}_{int(time.time())}.{ext}"
+            project_file.save(os.path.join(app.config['UPLOAD_FOLDER'], file_name))
+
+        # -------- Project Image (Single) --------
+        image = request.files.get("image")
+        image_name = None
+
+        if image and image.filename != "" and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            ext = filename.rsplit('.', 1)[1]
+            image_name = f"{student_id}_img_{int(time.time())}.{ext}"
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_name))
+
+        # -------- Other Fields --------
+        category = request.form.get("category")
+        tech_stack = request.form.get("tech_stack")
+        print("TECH STACK:", tech_stack)
+        project_link = request.form.get("project_link")
+
+        status = request.form.get("status", "").capitalize()
+        valid_status = ["Planning", "Ongoing", "Completed"]
+
+        if status not in valid_status:
+            status = "None"
+
+        # -------- Insert into DB --------
+        cursor.execute("""
+            INSERT INTO STUDENT_PROJECTS
+            (STUDENT_ID, PROJECT_TITLE, PROJECT_DESCRIPTION, PROJECT_FILE, PROJECT_IMAGE,
+             PROJECT_LINK, CREATED_AT, PROJECT_STATUS, PROJECT_CATEGORY, TECH_STACK)
+            VALUES (:sid, :title, :pdesc, :pfile, :pimage, :plink, :created_at, :status, :category, :tech_stack)
+        """, {
+            "sid": student_id,
+            "title": title,
+            "pdesc": description,
+            "pfile": file_name,
+            "pimage": image_name,
+            "plink": project_link,
+            "created_at": datetime.now(),
+            "status": status,
+            "category": category,
+            "tech_stack": tech_stack
+        })
+
+        connection.commit()
+        name = session.get('name') or session.get("student_name")
+        log_activity(f"{name} added a new project: {title}")# Log the add project activity
+
+        flash("✅ Project added successfully")
+        return redirect(url_for("my_projects"))
+
+    return render_template("add_project.html")
+
+#----------------- My Projects Route -----------------
+@app.route("/my_projects")
+def my_projects():
+    if 'student_id' not in session:
+        return redirect('/login')
+
+    student_id = session['student_id']
+
+    cursor.execute("""
+        SELECT PROJECT_ID, PROJECT_TITLE, PROJECT_DESCRIPTION,
+               PROJECT_FILE, PROJECT_IMAGE, CREATED_AT,
+               PROJECT_STATUS, PROJECT_CATEGORY, TECH_STACK, PROJECT_LINK
+        FROM STUDENT_PROJECTS
+        WHERE STUDENT_ID=:sid
+        ORDER BY CREATED_AT DESC
+    """, {"sid": student_id})
+
+    rows = cursor.fetchall()
+    projects = []
+
+    for r in rows:
+        description = r[2].read() if hasattr(r[2], "read") else r[2]
+
+        projects.append({
+            "id": r[0],
+            "title": r[1],
+            "description": description,
+            "file": r[3],
+            "image": r[4],   # ✅ single image
+            "created_at": r[5],
+            "status": r[6],
+            "category": r[7],
+            "tech_stack": r[8],
+            "link": r[9]
+        })
+
+    name = session.get("student_name")
+    return render_template("my_projects.html", projects=projects, name=name)
+#----------------- Delete Project Route -----------------
+@app.route("/delete_project/<int:project_id>", methods=["POST"])
+def delete_project(project_id):
+    if 'student_id' not in session:
+        return redirect('/login')
+
+    print("✅ Delete route called with ID:", project_id)
+
+    try:
+        # Get file + image names before deleting
+        cursor.execute("""
+            SELECT PROJECT_FILE, PROJECT_IMAGE
+            FROM STUDENT_PROJECTS
+            WHERE PROJECT_ID=:id
+        """, {"id": project_id})
+
+        row = cursor.fetchone()
+
+        if row:
+            file_name, image_name = row
+
+            # Delete project from DB
+            cursor.execute("""
+                DELETE FROM STUDENT_PROJECTS
+                WHERE PROJECT_ID=:id
+            """, {"id": project_id})
+
+            connection.commit()
+            
+
+            # -------- Delete files from folder --------
+            if file_name:
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+
+            if image_name:
+                image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_name)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+
+            flash("✅ Project deleted successfully")
+            
+        else:
+            flash("⚠️ Project not found")
+
+    except Exception as e:
+        connection.rollback()
+        print("❌ Delete Error:", e)
+        flash(f"Error deleting project: {str(e)}")
+
+        connection.commit()
+        # name = session.get('name') or session.get("student_name")
+        # log_activity(f"{name} deleted a project with: {project_title}")# Log the delete project activity
+
+    return redirect("/my_projects")
+
+#----------------- Edit Project Route -----------------
+@app.route("/edit_project/<int:project_id>", methods=["POST"])
+def edit_project(project_id):
+    if 'student_id' not in session:
+        return redirect('/login')
+
+    try:
+        title = request.form.get("title")
+        description = request.form.get("description")
+        tech_stack = request.form.get("tech_stack")
+        print("TECH STACK:", tech_stack)
+        project_link = request.form.get("project_link")
+
+        status = request.form.get("status", "").capitalize()
+        valid_status = ["Planning", "Ongoing", "Completed"]
+
+        if status not in valid_status:
+            status = "None"
+
+        print("✅ Edit route called for ID:", project_id)
+
+        # -------- Get old file/image --------
+        cursor.execute("""
+            SELECT PROJECT_FILE, PROJECT_IMAGE
+            FROM STUDENT_PROJECTS
+            WHERE PROJECT_ID=:pid
+        """, {"pid": project_id})
+
+        old_data = cursor.fetchone()
+        old_file, old_image = old_data if old_data else (None, None)
+
+        # -------- Handle new file --------
+        project_file = request.files.get("file")
+        file_name = old_file
+
+        if project_file and project_file.filename != "" and allowed_file(project_file.filename):
+            filename = secure_filename(project_file.filename)
+            ext = filename.rsplit('.', 1)[1]
+            file_name = f"{project_id}_file_{int(time.time())}.{ext}"
+            project_file.save(os.path.join(app.config['UPLOAD_FOLDER'], file_name))
+
+            # delete old file
+            if old_file:
+                old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_file)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+
+        # -------- Handle new image --------
+        image = request.files.get("image")
+        image_name = old_image
+
+        if image and image.filename != "" and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            ext = filename.rsplit('.', 1)[1]
+            image_name = f"{project_id}_img_{int(time.time())}.{ext}"
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_name))
+
+            # delete old image
+            if old_image:
+                old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_image)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+
+        # -------- Update DB --------
+        cursor.execute("""
+            UPDATE STUDENT_PROJECTS
+            SET PROJECT_TITLE=:title,
+                PROJECT_DESCRIPTION=:pdesc,
+                TECH_STACK=:tech,
+                PROJECT_STATUS=:status,
+                PROJECT_LINK=:plink,
+                PROJECT_FILE=:pfile,
+                PROJECT_IMAGE=:pimage
+            WHERE PROJECT_ID=:pid
+        """, {
+            "title": title,
+            "pdesc": description,
+            "tech": tech_stack,
+            "status": status,
+            "plink": project_link,
+            "pfile": file_name,
+            "pimage": image_name,
+            "pid": project_id
+        })
+
+        connection.commit()
+        name = session.get('name') or session.get("student_name")
+        log_activity(f"{name} edited a project: {title}")# Log the edit project
+
+        flash("✅ Project updated successfully!")
+
+    except Exception as e:
+        connection.rollback()
+        print("❌ Edit Error:", e)
+        flash(f"Error updating project: {str(e)}")
+
+    return redirect("/my_projects")
+
+# ----------------- Hackathon Teams Route -----------------
+@app.route('/hackathons')
+def hackathons():
+    if 'student_id' not in session:
+        return redirect('/login')
+
+    student_id = session['student_id']
+
+    hackathons = get_recent_hackathons(10)
+
+    updated_hackathons = []
+
+    for h in hackathons:
+        hackathon_name = h['hackathon_name']
+
+        # ✅ CHECK TEAM EXISTENCE FOR THIS HACKATHON
+        cursor.execute("""
+            SELECT TEAM_ID
+            FROM HACKATHON_STUDENTS
+            WHERE STUDENT_ID = :sid
+            AND HACKATHON_PREFERENCE = :hack
+        """, {
+            "sid": student_id,
+            "hack": hackathon_name
+        })
+
+        row = cursor.fetchone()
+
+        # ✅ True if team exists
+        h['has_team'] = True if row and row[0] else False
+
+        updated_hackathons.append(h)
+
+    return render_template(
+        'hackathon.html',
+        hackathons=updated_hackathons,
+        name=session.get('student_name')
+    )
+
+# ----------------- Join Hackathon Route -----------------
+@app.route('/join_hackathon/<int:hackathon_id>', methods=['GET', 'POST'])
+def join_hackathon(hackathon_id):
+    print(f"Join hackathon called with id: {hackathon_id}")
+    if 'student_id' not in session:
+        print("No student_id in session")
+        return redirect('/login')
+
+    student_id = session['student_id']
+    print(f"Student ID: {student_id}")
+    try:
+        # Fetch hackathon name
+        cursor.execute("SELECT HACKATHON_NAME FROM HACKATHONS WHERE HACKATHON_ID=:id", id=hackathon_id)
+        row = cursor.fetchone()
+        if not row:
+            print("Hackathon not found")
+            flash("Hackathon not found.")
+            return redirect('/hackathons')
+        hackathon_name = row[0]
+        print(f"Hackathon name: {hackathon_name}")
+
+        # Update student's hackathon preference
+        cursor.execute("UPDATE HACKATHON_STUDENTS SET HACKATHON_PREFERENCE=:hack WHERE STUDENT_ID=:sid", hack=hackathon_name, sid=student_id)
+        connection.commit()
+        print("Updated preference")
+
+        # Store selected hackathon_id in session
+        session['selected_hackathon_id'] = hackathon_id
+        print(f"Set session hackathon_id: {hackathon_id}")
+
+        return redirect('/rate')
+    except Exception as e:
+        print(f"Error in join_hackathon: {e}")
+        app.logger.exception("Error in join_hackathon")
+        flash(f"Database error: {str(e)}")
+        return redirect('/hackathons')
+
+# ----------------- Rate Skills Route -----------------
+@app.route('/rate')
+def rate_skills():
+    print("Rate skills called")
+    if 'student_id' not in session:
+        print("No student_id in session for rate")
+        return redirect('/login')
+    hackathon_id = session.get('selected_hackathon_id')
+    print(f"Hackathon ID from session: {hackathon_id}")
+    if not hackathon_id:
+        print("No hackathon selected")
+        flash('No hackathon selected.')
+        return redirect('/hackathons')
+    try:
+        cursor.execute("SELECT HACKATHON_ID, HACKATHON_NAME, VENUE, TO_CHAR(HACKATHON_DATE,'YYYY-MM-DD'), DESCRIPTION, STATUS FROM HACKATHONS WHERE HACKATHON_ID=:id", id=hackathon_id)
+        row = cursor.fetchone()
+        if not row:
+            print("Hackathon not found in rate")
+            flash('Hackathon not found.')
+            return redirect('/hackathons')
+        hackathon = {
+            'id': row[0],
+            'name': row[1],
+            'venue': row[2],
+            'date': row[3],
+            'description': row[4],
+            'status': row[5]
+        }
+        print(f"Rendering rate for hackathon: {hackathon['name']}")
+        return render_template('rate.html', hackathon=hackathon)
+    except Exception as e:
+        print(f"Error in rate_skills: {e}")
+        app.logger.exception("Error in rate_skills")
+        flash(f"Database error: {str(e)}")
+        return redirect('/hackathons')
+# ----------------- Create Team Logic (AJAX endpoint) -----------------
+@app.route('/create_team', methods=['POST'])
+def create_team():
+    try:
+        if 'student_id' not in session:
+            return jsonify({'error': 'Not logged in'}), 401
+
+        student_id = session['student_id']
+        hackathon_id = session.get('selected_hackathon_id')
+
+        if not hackathon_id:
+            return jsonify({'error': 'No hackathon selected'}), 400
+
+        # ✅ Always fresh connection
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # 1️⃣ Get ratings
+        frontend = int(request.form.get('frontend', 0))
+        backend = int(request.form.get('backend', 0))
+        communication = int(request.form.get('communication', 0))
+        leadership = int(request.form.get('leadership', 0))
+
+        # 2️⃣ Update skills
+        cursor.execute("""
+            UPDATE HACKATHON_STUDENTS
+            SET FRONTEND_SKILL=:frontend,
+                BACKEND_SKILL=:backend,
+                COMMUNICATION_SKILL=:communication,
+                LEADERSHIP_SKILL=:leadership
+            WHERE STUDENT_ID=:student_id
+        """, {
+            "frontend": frontend,
+            "backend": backend,
+            "communication": communication,
+            "leadership": leadership,
+            "student_id": student_id
+        })
+
+        # 3️⃣ Get hackathon name
+        cursor.execute("""
+            SELECT HACKATHON_NAME 
+            FROM HACKATHONS 
+            WHERE HACKATHON_ID=:id
+        """, {"id": hackathon_id})
+
+        row = cursor.fetchone()
+
+        if not row:
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'Hackathon not found'}), 404
+
+        hackathon_name = row[0]
+
+        # 4️⃣ Save preference
+        cursor.execute("""
+            UPDATE HACKATHON_STUDENTS 
+            SET HACKATHON_PREFERENCE=:hack 
+            WHERE STUDENT_ID=:sid
+        """, {
+            "hack": hackathon_name,
+            "sid": student_id
+        })
+
+        conn.commit()
+
+        # ❌ DO NOT PASS cursor/connection
+        # ✅ Let each function handle its own DB
+        perform_hackathon_clustering()
+        assign_roles()
+        form_balanced_role_teams()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'redirect': '/myteam'
+        })
+
+    except Exception as e:
+        print("ERROR in create_team:", e)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ----------------- My Team Page -----------------
+@app.route('/myteam')
+def myteam():
+    if 'student_id' not in session:
+        return redirect('/login')
+    student_id = session['student_id']
+
+    # ✅ ALWAYS create fresh connection
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT TEAM_ID, HACKATHON_PREFERENCE FROM HACKATHON_STUDENTS WHERE STUDENT_ID=:id", id=student_id)
+    row = cursor.fetchone()
+    team_id = row[0] if row else None
+    hackathon = row[1] if row else None
+    if team_id:
+        cursor.execute("""
+            SELECT STUDENT_NAME, COLLEGE_NAME, ROLE, EMAIL_ID
+            FROM HACKATHON_STUDENTS
+            WHERE TEAM_ID=:team_id
+        """, team_id=team_id)
+        members = cursor.fetchall()
+        team_members = [
+            {'name': m[0], 'institution': m[1], 'role': m[2], 'email': m[3]} for m in members
+        ]
+        return render_template('myteam.html', team_members=team_members, has_team=True)
+    else:
+        # Determine reason
+        reason = "Team not formed yet."
+        if hackathon:
+            cursor.execute("SELECT COUNT(*) FROM HACKATHON_STUDENTS WHERE HACKATHON_PREFERENCE=:hack", hack=hackathon)
+            count = cursor.fetchone()[0]
+            if count < 4:
+                reason = f"Insufficient participants in {hackathon}. At least 4 students are required to form a team."
+            else:
+                reason = f"Unable to form a balanced team in {hackathon}. This may be due to uneven distribution of roles or clustering issues."
+        return render_template('myteam.html', team_members=[], has_team=False, reason=reason)
+    
 # ----------------- Admin Credentials -----------------
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@teamup.com")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
@@ -484,6 +1079,7 @@ def admin_dashboard():
         cursor.execute("""
             SELECT HACKATHON_NAME,
                    TO_CHAR(HACKATHON_DATE,'Mon DD'),
+                   VENUE,
                    STATUS
             FROM HACKATHONS
             WHERE UPPER(STATUS) = 'ACTIVE'
@@ -497,7 +1093,8 @@ def admin_dashboard():
             {
                 "name": h[0],
                 "date": h[1],
-                "status": h[2]
+                "venue": h[2],
+                "status": h[3]
             }
             for h in hackathons
         ]
@@ -569,7 +1166,7 @@ def admin_activity():
 
     activities = []
 
-    for desc, time in rows:
+    for description, time in rows:
         now = datetime.now()
         diff = now - time
 
@@ -586,7 +1183,7 @@ def admin_activity():
             ago = f"{hours} hours ago"
 
         activities.append({
-            "desc": desc,
+            "description":  description,
             "time": ago
         })
 
@@ -751,7 +1348,7 @@ def add_hackathon():
         date = request.form['date']
         venue = request.form['venue']
         description = request.form['description']
-        status = request.form.get('status')
+        status = request.form['status']
 
         cursor.execute("""
             INSERT INTO HACKATHONS
@@ -776,7 +1373,7 @@ def update_hackathon():
     date = request.form['date']
     venue = request.form['venue']
     description = request.form['description']
-    status = request.form.get('status')
+    status = request.form['status']
     
     cursor.execute("""
         UPDATE HACKATHONS

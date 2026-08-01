@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d12;
+    --surface: #16161f;
+    --surface2: #1e1e2a;
+    --border: #2a2a3a;
+    --accent: #7c6aff;
+    --accent2: #ff6a9b;
+    --accent3: #6affda;
+    --text: #e8e8f0;
+    --text-muted: #7a7a9a;
+    --sidebar-w: 260px;
+    --radius: 14px;
+  }
+  [data-theme="aurora"] { --accent:#7c6aff;--accent2:#ff6a9b;--accent3:#6affda;--bg:#0d0d12;--surface:#16161f;--surface2:#1e1e2a;--border:#2a2a3a;--text:#e8e8f0;--text-muted:#7a7a9a; }
+  [data-theme="aurora-light"] { --accent:#6c5ce7;--accent2:#fd79a8;--accent3:#00cec9;--bg:#f0f0f8;--surface:#ffffff;--surface2:#f5f5ff;--border:#e0e0ee;--text:#1a1a2e;--text-muted:#6b6b8a; }
+  [data-theme="neon-ember"] { --accent:#00c9a7;--accent2:#ff6b35;--accent3:#ffd166;--bg:#080d0c;--surface:#0e1614;--surface2:#141f1c;--border:#1e2e2b;--text:#e0f0ed;--text-muted:#6a8a84; }
+  [data-theme="neon-ember-light"] { --accent:#00a88c;--accent2:#e85d2a;--accent3:#d4971a;--bg:#f0faf8;--surface:#ffffff;--surface2:#e8f7f3;--border:#c8e8e2;--text:#0a2420;--text-muted:#4a7a74; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;background:var(--bg)!important;color:var(--text)!important;font-family:'DM Sans',sans-serif!important; }
+  body > *:not(#teamup-root):not(script):not(style):not(link) { display:none!important; }
+
+  ::-webkit-scrollbar { width:8px; }
+  ::-webkit-scrollbar-track { background:#0a0a0f; }
+  ::-webkit-scrollbar-thumb { background:#1e1e2e;border-radius:99px;border:2px solid #0a0a0f; }
+  ::-webkit-scrollbar-thumb:hover { background:#2e2e42; }
+  * { scrollbar-width:thin;scrollbar-color:#1e1e2e #0a0a0f; }
+
+  #teamup-root { position:fixed;inset:0;display:flex;background:var(--bg);overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width:var(--sidebar-w);height:100%;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 16px;overflow-y:auto;overflow-x:hidden;z-index:100;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1),background 0.4s; }
+  .sidebar-logo { display:flex;align-items:center;gap:10px;padding:0 8px 28px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-shrink:0; }
+  .logo-icon { width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#fff;flex-shrink:0; }
+  .logo-text { font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-0.3px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  .profile-card { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:20px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.2s,transform 0.2s;flex-shrink:0; }
+  .profile-card:hover { border-color:var(--accent);transform:translateY(-1px); }
+  .avatar { width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50%;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:#fff;flex-shrink:0; }
+  .profile-info { flex:1;min-width:0; }
+  .profile-name { font-family:'Syne',sans-serif;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .profile-role { font-size:12px;color:var(--text-muted);margin-top:2px; }
+  .edit-btn { width:28px;height:28px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;cursor:pointer;transition:background 0.2s,border-color 0.2s;flex-shrink:0;text-decoration:none; }
+  .edit-btn:hover { background:var(--accent);border-color:var(--accent); }
+  .edit-btn svg { width:13px;height:13px;stroke:var(--text-muted);transition:stroke 0.2s; }
+  .edit-btn:hover svg { stroke:#fff; }
+  .nav-section { margin-bottom:8px; }
+  .nav-label { font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);padding:0 10px;margin-bottom:6px; }
+  .nav-item { display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;transition:background 0.2s,color 0.2s;text-decoration:none;color:var(--text-muted);font-size:14px;font-weight:500;position:relative;margin-bottom:2px; }
+  .nav-item svg { width:18px;height:18px;stroke:currentColor;flex-shrink:0; }
+  .nav-item:hover { background:var(--surface2);color:var(--text); }
+  .nav-item.active { background:linear-gradient(135deg,var(--accent)22,var(--accent2)11);color:var(--accent);border:1px solid var(--accent)33; }
+  .nav-item.active::before { content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--accent);border-radius:0 3px 3px 0; }
+  .nav-badge { margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px; }
+  .theme-section { margin-top:auto;padding-top:16px;border-top:1px solid var(--border);flex-shrink:0; }
+  .theme-label { font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;gap:6px; }
+  .theme-dots { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px; }
+  .theme-dot { width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform 0.2s,border-color 0.2s; }
+  .theme-dot:hover { transform:scale(1.15); }
+  .theme-dot.active { border-color:var(--text);transform:scale(1.1); }
+  .theme-dot[data-theme-pick="aurora"] { background:linear-gradient(135deg,#7c6aff,#ff6a9b); }
+  .theme-dot[data-theme-pick="aurora-light"] { background:linear-gradient(135deg,#c5b8ff,#ffb3d1); }
+  .theme-dot[data-theme-pick="neon-ember"] { background:linear-gradient(135deg,#00c9a7,#ff6b35); }
+  .theme-dot[data-theme-pick="neon-ember-light"] { background:linear-gradient(135deg,#a8f0e6,#ffb89a); }
+  .logout-btn { display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;color:#ff6a6a;font-size:14px;font-weight:500;text-decoration:none;transition:background 0.2s;border:1px solid transparent; }
+  .logout-btn svg { width:18px;height:18px;stroke:currentColor;flex-shrink:0; }
+  .logout-btn:hover { background:#ff6a6a18;border-color:#ff6a6a33; }
+
+  /* MAIN */
+  .main { flex:1;height:100%;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;min-width:0; }
+  .topbar { padding:20px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10;backdrop-filter:blur(12px);transition:background 0.4s;flex-shrink:0; }
+  .topbar-left { display:flex;align-items:center;gap:14px; }
+  .back-btn { width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;cursor:pointer;text-decoration:none;transition:background 0.2s,border-color 0.2s; }
+  .back-btn:hover { background:var(--surface2);border-color:var(--accent); }
+  .back-btn svg { width:16px;height:16px;stroke:var(--text-muted); }
+  .topbar-title { font-family:'Syne',sans-serif;font-weight:800;font-size:22px; }
+  .topbar-title span { background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+
+  .content { padding:28px 32px 48px; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
+
+  .hackathon-header { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:28px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;animation:fadeUp 0.4s ease both; }
+  .hackathon-header::before { content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),var(--accent2)); }
+  .hackathon-header::after { content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--accent)06,transparent 60%);pointer-events:none; }
+  .hackathon-header .hack-name { font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text); }
+  .hackathon-header .hack-meta { display:flex;gap:16px;flex-wrap:wrap; }
+  .hackathon-header .hack-meta span { display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text-muted); }
+
+  .skills-grid { display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px; }
+  .skill-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:14px;transition:border-color 0.3s,box-shadow 0.3s;animation:fadeUp 0.5s ease both;position:relative;overflow:hidden; }
+  .skill-card:nth-child(1){animation-delay:0.10s;}.skill-card:nth-child(2){animation-delay:0.15s;}.skill-card:nth-child(3){animation-delay:0.20s;}.skill-card:nth-child(4){animation-delay:0.25s;}
+  .skill-card.rated { border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)22,0 8px 24px var(--accent)12; }
+  .skill-title { font-family:'Syne',sans-serif;font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px; }
+  .skill-icon { width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex-shrink:0; }
+  .skill-icon svg { width:18px;height:18px; }
+  .skill-desc { font-size:12px;color:var(--text-muted);line-height:1.5; }
+  .rating-row { display:flex;gap:5px;flex-wrap:wrap; }
+  .rating-btn { width:34px;height:34px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-weight:700;font-size:13px;cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:background 0.15s,color 0.15s,border-color 0.15s,transform 0.15s; }
+  .rating-btn:hover { background:var(--accent)22;border-color:var(--accent)55;color:var(--accent);transform:translateY(-2px); }
+  .rating-btn.selected { background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px var(--accent)44; }
+
+  .create-team-section { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 26px;margin-top:4px;display:flex;align-items:center;justify-content:space-between;gap:20px;animation:fadeUp 0.5s ease 0.30s both;position:relative;overflow:hidden; }
+  .create-team-section::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--accent)06,transparent);pointer-events:none; }
+  .create-team-section > span { font-size:14px;color:var(--text-muted);line-height:1.6; }
+  .create-team-btn { display:flex;align-items:center;gap:8px;padding:13px 28px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 4px 20px var(--accent)44;transition:opacity 0.2s,transform 0.2s;opacity:0.45;pointer-events:none;white-space:nowrap;flex-shrink:0; }
+  .create-team-btn.enabled { opacity:1;pointer-events:auto; }
+  .create-team-btn.enabled:hover { opacity:0.9;transform:translateY(-2px); }
+
+  /* Loading overlay — inside root so it inherits theme vars */
+  .loading-overlay { display:none;position:absolute;inset:0;z-index:999;background:#00000066;backdrop-filter:blur(6px);place-items:center; }
+  .loading-overlay.show { display:grid; }
+  .loading-card { background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 48px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;animation:fadeUp 0.3s ease; }
+  .loading-spinner { width:48px;height:48px; }
+  .loading-spinner circle { stroke:var(--border);fill:none;stroke-width:4; }
+  .loading-spinner .spin { stroke:url(#spinGrad);fill:none;stroke-width:4;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:60;animation:rotate 1s linear infinite;transform-origin:center; }
+  @keyframes rotate { to{transform:rotate(360deg);} }
+  .loading-text { font-family:'Syne',sans-serif;font-weight:700;font-size:16px; }
+  .loading-sub { font-size:13px;color:var(--text-muted); }
+
+  /* Mobile toggle — positioned inside root */
+  .mob-toggle { display:none;position:absolute;top:16px;left:16px;z-index:300;width:40px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;place-items:center; }
+  .mob-toggle svg { width:20px;height:20px;stroke:var(--text); }
+  .sidebar-overlay { display:none;position:absolute;inset:0;background:#00000080;z-index:200; }
+
+  @media(max-width:800px){.skills-grid{grid-template-columns:1fr;}.content{padding:20px;}}
+  @media(max-width:700px){.sidebar{position:absolute;left:0;top:0;bottom:0;transform:translateX(-100%);}.sidebar.open{transform:none;}.sidebar-overlay.open{display:block;}.mob-toggle{display:grid;}.topbar{padding:14px 20px 14px 64px;}.create-team-section{flex-direction:column;align-items:flex-start;}.create-team-btn{width:100%;justify-content:center;}}
+  @media(max-width:480px){.rating-btn{width:28px;height:28px;font-size:11px;}}
+</style>
+
+<div id="teamup-root">
+
+  <!-- Loading overlay (inside root) -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-card">
+      <svg class="loading-spinner" viewBox="0 0 48 48">
+        <defs>
+          <linearGradient id="spinGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#7c6aff"/>
+            <stop offset="100%" style="stop-color:#ff6a9b"/>
+          </linearGradient>
+        </defs>
+        <circle cx="24" cy="24" r="20"/>
+        <circle class="spin" cx="24" cy="24" r="20"/>
+      </svg>
+      <div class="loading-text">Building your team...</div>
+      <div class="loading-sub">Finding the best match for you ⚡</div>
+    </div>
+  </div>
+
+  <!-- Mobile sidebar overlay (inside root) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Mobile hamburger toggle (inside root) -->
+  <button class="mob-toggle" id="mobToggle">
+    <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">T</div>
+      <div class="logo-text">TeamUp</div>
+    </div>
+
+    <!-- FIX: profile-info div now properly closed before edit-btn -->
+    <div class="profile-card" onclick="window.location.href='{{ url_for('view_profile') }}'">
+      <div class="avatar">{{ name[0]|upper }}</div>
+      <div class="profile-info">
+        <div class="profile-name">{{ name }}</div>
+        <div class="profile-role">Student</div>
+      </div>
+      <a href="{{ url_for('edit_profile') }}" class="edit-btn" onclick="event.stopPropagation()">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      </a>
+    </div><!-- /.profile-card -->
+
+    <div class="nav-section">
+      <div class="nav-label">Workspace</div>
+      <a class="nav-item" href="{{ url_for('dashboard') }}">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="{{ url_for('add_project') }}">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        Upload Project
+      </a>
+      <a class="nav-item" href="{{ url_for('my_projects') }}">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        My Projects
+        <span class="nav-badge">{{ project_count }}</span>
+      </a>
+      <a class="nav-item active" href="{{ url_for('hackathons') }}">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Hackathons
+        <span class="nav-badge" style="background:var(--accent2);">5</span>
+      </a>
+    </div>
+
+    <div class="theme-section">
+      <div class="theme-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Theme
+      </div>
+      <div class="theme-dots">
+        <div class="theme-dot active" data-theme-pick="aurora" onclick="setTheme('aurora',this)"></div>
+        <div class="theme-dot" data-theme-pick="aurora-light" onclick="setTheme('aurora-light',this)"></div>
+        <div class="theme-dot" data-theme-pick="neon-ember" onclick="setTheme('neon-ember',this)"></div>
+        <div class="theme-dot" data-theme-pick="neon-ember-light" onclick="setTheme('neon-ember-light',this)"></div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout-btn">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Logout
+      </a>
+    </div>
+  </aside><!-- /.sidebar -->
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <a onclick="window.history.back();return false;" href="#" class="back-btn">
+          <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div class="topbar-title">Rate Your <span>Skills</span></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hackathon-header">
+        <div class="hack-name">{{ hackathon.name }}</div>
+        <div class="hack-meta">
+          <span>{{ hackathon.venue }}</span>
+          <span>📅 {{ hackathon.date }}</span>
+        </div>
+      </div>
+
+      <form id="rateForm">
+        <div class="skills-grid">
+          <div class="skill-card" id="card-frontend">
+            <div class="skill-title">
+              <div class="skill-icon" style="background:var(--accent)18;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+              </div>
+              Frontend Skill
+            </div>
+            <div class="skill-desc">UI/UX · HTML · CSS · React</div>
+            <div class="rating-row" id="frontend-row">
+              {% for i in range(1, 11) %}<button type="button" class="rating-btn" onclick="setRating('frontend', '{{ i }}')">{{ i }}</button>{% endfor %}
+            </div>
+          </div>
+
+          <div class="skill-card" id="card-backend">
+            <div class="skill-title">
+              <div class="skill-icon" style="background:var(--accent2)18;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent2)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+              </div>
+              Backend Skill
+            </div>
+            <div class="skill-desc">APIs · Databases · Node · Python</div>
+            <div class="rating-row" id="backend-row">
+              {% for i in range(1, 11) %}<button type="button" class="rating-btn" onclick="setRating('backend', '{{ i }}')">{{ i }}</button>{% endfor %}
+            </div>
+          </div>
+
+          <div class="skill-card" id="card-communication">
+            <div class="skill-title">
+              <div class="skill-icon" style="background:var(--accent3)18;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent3)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>
+              </div>
+              Communication Skill
+            </div>
+            <div class="skill-desc">Presentation · Teamwork · Clarity</div>
+            <div class="rating-row" id="communication-row">
+              {% for i in range(1, 11) %}<button type="button" class="rating-btn" onclick="setRating('communication', '{{ i }}')">{{ i }}</button>{% endfor %}
+            </div>
+          </div>
+
+          <div class="skill-card" id="card-leadership">
+            <div class="skill-title">
+              <div class="skill-icon" style="background:#f59e0b18;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+              </div>
+              Leadership Skill
+            </div>
+            <div class="skill-desc">Decision making · Motivation</div>
+            <div class="rating-row" id="leadership-row">
+              {% for i in range(1, 11) %}<button type="button" class="rating-btn" onclick="setRating('leadership', '{{ i }}')">{{ i }}</button>{% endfor %}
+            </div>
+          </div>
+        </div><!-- /.skills-grid -->
+
+        <div class="create-team-section">
+          <span>Ready to form your team?<br>Rate all 4 skills above &mdash; 4 remaining.</span>
+          <button id="createTeamBtn" class="create-team-btn" type="button">Create Team</button>
+        </div>
+      </form>
+    </div><!-- /.content -->
+  </div><!-- /.main -->
+
+</div><!-- /#teamup-root -->
+
+<script>
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  document.getElementById('mobToggle').addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+  });
+
+  function setTheme(theme, dotEl) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    document.getElementById('teamup-root').setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    dotEl.classList.add('active');
+  }
+
+  let ratings = { frontend: 0, backend: 0, communication: 0, leadership: 0 };
+
+  function setRating(skill, value) {
+    ratings[skill] = parseInt(value);
+    document.querySelectorAll(`#${skill}-row .rating-btn`).forEach(btn => {
+      btn.classList.remove('selected');
+      if (parseInt(btn.textContent) === ratings[skill]) btn.classList.add('selected');
+    });
+    if (ratings[skill] > 0) document.getElementById('card-' + skill).classList.add('rated');
+    updateCreateBtn();
+  }
+
+  function updateCreateBtn() {
+    const allRated = Object.values(ratings).every(v => v > 0);
+    const btn = document.getElementById('createTeamBtn');
+    if (allRated) {
+      btn.classList.add('enabled');
+      btn.previousElementSibling.innerHTML = 'Ready to form your team?';
+    } else {
+      btn.classList.remove('enabled');
+      const remaining = 4 - Object.values(ratings).filter(v => v > 0).length;
+      btn.previousElementSibling.innerHTML = `Rate all 4 skills above &mdash; ${remaining} remaining.`;
+    }
+  }
+
+  document.getElementById('createTeamBtn').addEventListener('click', function () {
+    if (!Object.values(ratings).every(v => v > 0)) return;
+    document.getElementById('loadingOverlay').classList.add('show');
+    const formData = new FormData();
+    formData.append('frontend', ratings.frontend);
+    formData.append('backend', ratings.backend);
+    formData.append('communication', ratings.communication);
+    formData.append('leadership', ratings.leadership);
+    fetch('/create_team', {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = data.redirect;
+      } else {
+        document.getElementById('loadingOverlay').classList.remove('show');
+        alert('Error: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(() => {
+      document.getElementById('loadingOverlay').classList.remove('show');
+      alert('Network error. Please try again.');
+    });
+  });
+</script>
+{% endblock %}

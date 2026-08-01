@@ -321,6 +321,7 @@
     <div class="avatar" id="sidebarAvatar">{{ name[0]|upper }}</div>
     <div class="profile-info">
       <div class="profile-name">{{name}}</div>
+       <div class="profile-role">Student</div>
       <!-- <div class="profile-role">{{ email}}</div> -->
     </div>
     <a href="#" class="edit-btn" title="Edit Profile">
@@ -329,21 +330,21 @@
   </div>
   <div class="nav-section">
     <div class="nav-label">Workspace</div>
-    <a class="nav-item" href="/dashboard">
+    <a class="nav-item" href="{{ url_for('dashboard') }}" >
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
       Dashboard
     </a>
-    <a class="nav-item" href="/upload">
+    <a class="nav-item" href="{{ url_for('add_project') }}">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
       Upload Project
     </a>
-    <a class="nav-item" href="/projects">
+    <a class="nav-item" href="{{ url_for('my_projects') }}">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-      My Projects <span class="nav-badge">3</span>
+      My Projects <span class="nav-badge">{{ project_count }}</span>
     </a>
-    <a class="nav-item" href="/hackathon">
+    <a class="nav-item" href="{{ url_for('hackathons') }}">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-      Hackathons <span class="nav-badge" style="background: var(--accent2);">2</span>
+      Hackathons <span class="nav-badge" style="background: var(--accent2);">5</span>
     </a>
   </div>
 
@@ -358,7 +359,7 @@
       <div class="theme-dot" data-theme-pick="neon-ember" title="Neon Ember" onclick="setTheme('neon-ember', this)"></div>
       <div class="theme-dot" data-theme-pick="neon-ember-light" title="Neon Ember Light" onclick="setTheme('neon-ember-light', this)"></div>
     </div>
-    <a href="/logout" class="logout-btn">
+    <a href="{{ url_for('logout') }}" class="logout-btn">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
       Logout
     </a>

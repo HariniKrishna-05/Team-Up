@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d12;--surface: #16161f;--surface2: #1e1e2a;--border: #2a2a3a;
+    --accent: #7c6aff;--accent2: #ff6a9b;--accent3: #6affda;
+    --text: #e8e8f0;--text-muted: #7a7a9a;--sidebar-w: 260px;--radius: 14px;
+  }
+  [data-theme="aurora"] { --accent:#7c6aff;--accent2:#ff6a9b;--accent3:#6affda;--bg:#0d0d12;--surface:#16161f;--surface2:#1e1e2a;--border:#2a2a3a;--text:#e8e8f0;--text-muted:#7a7a9a; }
+  [data-theme="aurora-light"] { --accent:#6c5ce7;--accent2:#fd79a8;--accent3:#00cec9;--bg:#f0f0f8;--surface:#ffffff;--surface2:#f5f5ff;--border:#e0e0ee;--text:#1a1a2e;--text-muted:#6b6b8a; }
+  [data-theme="neon-ember"] { --accent:#00c9a7;--accent2:#ff6b35;--accent3:#ffd166;--bg:#080d0c;--surface:#0e1614;--surface2:#141f1c;--border:#1e2e2b;--text:#e0f0ed;--text-muted:#6a8a84; }
+  [data-theme="neon-ember-light"] { --accent:#00a88c;--accent2:#e85d2a;--accent3:#d4971a;--bg:#f0faf8;--surface:#ffffff;--surface2:#e8f7f3;--border:#c8e8e2;--text:#0a2420;--text-muted:#4a7a74; }
+
+  *, *::before, *::after { box-sizing:border-box;margin:0;padding:0; }
+  html, body { width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;background:var(--bg)!important;color:var(--text)!important;font-family:'DM Sans',sans-serif!important; }
+  body > *:not(#teamup-root):not(script):not(style):not(link) { display:none!important; }
+
+  ::-webkit-scrollbar { width:8px; }
+  ::-webkit-scrollbar-track { background:#0a0a0f; }
+  ::-webkit-scrollbar-thumb { background:#1e1e2e;border-radius:99px;border:2px solid #0a0a0f; }
+  ::-webkit-scrollbar-thumb:hover { background:#2e2e42; }
+  * { scrollbar-width:thin;scrollbar-color:#1e1e2e #0a0a0f; }
+
+  #teamup-root { position:fixed;inset:0;display:flex;background:var(--bg);overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width:var(--sidebar-w);height:100%;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 16px;overflow-y:auto;overflow-x:hidden;z-index:100;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1),background 0.4s; }
+  .sidebar-logo { display:flex;align-items:center;gap:10px;padding:0 8px 28px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-shrink:0; }
+  .logo-icon { width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#fff;flex-shrink:0; }
+  .logo-text { font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-0.3px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  .profile-card { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:20px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.2s,transform 0.2s;flex-shrink:0; }
+  .profile-card:hover { border-color:var(--accent);transform:translateY(-1px); }
+  .avatar { width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50%;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:#fff;flex-shrink:0; }
+  .profile-info { flex:1;min-width:0; }
+  .profile-name { font-family:'Syne',sans-serif;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .profile-role { font-size:11px;color:var(--text-muted);margin-top:2px; }
+  .edit-btn { width:28px;height:28px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;cursor:pointer;transition:background 0.2s,border-color 0.2s;flex-shrink:0;text-decoration:none; }
+  .edit-btn:hover { background:var(--accent);border-color:var(--accent); }
+  .edit-btn svg { width:13px;height:13px;stroke:var(--text-muted);transition:stroke 0.2s; }
+  .edit-btn:hover svg { stroke:#fff; }
+  .nav-section { margin-bottom:8px; }
+  .nav-label { font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);padding:0 10px;margin-bottom:6px; }
+  .nav-item { display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;transition:background 0.2s,color 0.2s;text-decoration:none;color:var(--text-muted);font-size:14px;font-weight:500;position:relative;margin-bottom:2px; }
+  .nav-item svg { width:18px;height:18px;stroke:currentColor;flex-shrink:0; }
+  .nav-item:hover { background:var(--surface2);color:var(--text); }
+  .nav-item.active { background:linear-gradient(135deg,var(--accent)22,var(--accent2)11);color:var(--accent);border:1px solid var(--accent)33; }
+  .nav-item.active::before { content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--accent);border-radius:0 3px 3px 0; }
+  .nav-badge { margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px; }
+  .theme-section { margin-top:auto;padding-top:16px;border-top:1px solid var(--border);flex-shrink:0; }
+  .theme-label { font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;gap:6px; }
+  .theme-dots { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px; }
+  .theme-dot { width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform 0.2s,border-color 0.2s; }
+  .theme-dot:hover { transform:scale(1.15); }
+  .theme-dot.active { border-color:var(--text);transform:scale(1.1); }
+  .theme-dot[data-theme-pick="aurora"] { background:linear-gradient(135deg,#7c6aff,#ff6a9b); }
+  .theme-dot[data-theme-pick="aurora-light"] { background:linear-gradient(135deg,#c5b8ff,#ffb3d1); }
+  .theme-dot[data-theme-pick="neon-ember"] { background:linear-gradient(135deg,#00c9a7,#ff6b35); }
+  .theme-dot[data-theme-pick="neon-ember-light"] { background:linear-gradient(135deg,#a8f0e6,#ffb89a); }
+  .logout-btn { display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;color:#ff6a6a;font-size:14px;font-weight:500;text-decoration:none;transition:background 0.2s;border:1px solid transparent; }
+  .logout-btn svg { width:18px;height:18px;stroke:currentColor;flex-shrink:0; }
+  .logout-btn:hover { background:#ff6a6a18;border-color:#ff6a6a33; }
+
+  /* MAIN */
+  .main { flex:1;height:100%;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;min-width:0; }
+  .topbar { padding:20px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10;backdrop-filter:blur(12px);transition:background 0.4s;flex-shrink:0; }
+  .topbar-left { display:flex;flex-direction:column;gap:2px; }
+  .topbar-title { font-family:'Syne',sans-serif;font-weight:800;font-size:24px; }
+  .topbar-title span { background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  .topbar-sub { font-size:13px;color:var(--text-muted); }
+  .content { padding:28px 32px 48px; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:translateY(0);} }
+
+  /* ── ERROR BANNER ── */
+  .error-banner {
+    display: none;
+    background: #ff6a6a0d;
+    border: 1px solid #ff6a6a33;
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 28px;
+    gap: 16px;
+    align-items: flex-start;
+    animation: slideIn 0.4s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+  .error-banner.show { display: flex; }
+  .error-banner::before { content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#ff6a6a; }
+  .error-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: #ff6a6a18; border: 1px solid #ff6a6a33;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .error-icon svg { width: 20px; height: 20px; stroke: #ff6a6a; }
+  .error-body { flex: 1; }
+  .error-title { font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:#ff6a6a;margin-bottom:5px; }
+  .error-msg { font-size:13px;color:var(--text-muted);line-height:1.6; }
+  .error-close {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .error-close:hover { background: #ff6a6a22; border-color: #ff6a6a33; }
+  .error-close svg { width: 12px; height: 12px; stroke: var(--text-muted); }
+
+  /* ── HACKATHON CONTEXT BANNER ── */
+  .hackathon-banner {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 22px; margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    position: relative; overflow: hidden; animation: fadeUp 0.4s ease both;
+  }
+  .hackathon-banner::before { content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),var(--accent2)); }
+  .hackathon-banner::after { content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--accent)06,transparent 60%);pointer-events:none; }
+  .banner-info { display:flex;flex-direction:column;gap:5px; }
+  .banner-hackathon-label { font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted); }
+  .banner-hackathon-name { font-family:'Syne',sans-serif;font-weight:800;font-size:18px; }
+  .banner-badge { font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:#10b98122;color:#10b981;border:1px solid #10b98133;flex-shrink:0; }
+
+  /* ── MEMBER CARDS ── */
+  .members-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-bottom:32px; }
+  .member-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;transition:border-color 0.3s,transform 0.3s,box-shadow 0.3s;animation:fadeUp 0.5s ease both; }
+  .member-card:nth-child(1){animation-delay:0.05s;}.member-card:nth-child(2){animation-delay:0.10s;}.member-card:nth-child(3){animation-delay:0.15s;}.member-card:nth-child(4){animation-delay:0.20s;}.member-card:nth-child(5){animation-delay:0.25s;}
+  .member-card::before { content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),var(--accent2)); }
+  .member-card:nth-child(3n+2)::before { background:linear-gradient(180deg,var(--accent2),#f59e0b); }
+  .member-card:nth-child(3n+3)::before { background:linear-gradient(180deg,var(--accent3),var(--accent)); }
+  .member-card::after { content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--accent)06,transparent 60%);opacity:0;transition:opacity 0.3s;pointer-events:none; }
+  .member-card:hover { border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 36px var(--accent)18; }
+  .member-card:hover::after { opacity:1; }
+
+  /* You badge */
+  .you-badge { position:absolute;top:14px;right:14px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--accent3)18;color:var(--accent3);border:1px solid var(--accent3)33; }
+
+  .member-top { display:flex;align-items:center;gap:14px; }
+  .member-avatar { width:48px;height:48px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#fff; }
+  .member-card:nth-child(3n+2) .member-avatar { background:linear-gradient(135deg,var(--accent2),#f59e0b); }
+  .member-card:nth-child(3n+3) .member-avatar { background:linear-gradient(135deg,var(--accent3),var(--accent)); }
+  .member-name-block { flex:1;min-width:0; }
+  .member-name { font-family:'Syne',sans-serif;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px; }
+  .member-email { font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px; }
+  .member-email svg { width:11px;height:11px;stroke:var(--text-muted);flex-shrink:0; }
+  .member-divider { height:1px;background:var(--border); }
+  .member-meta-row { display:flex;flex-direction:column;gap:8px; }
+  .meta-item { display:flex;align-items:center;justify-content:space-between;gap:10px; }
+  .meta-label { font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;font-weight:600; }
+  .meta-value { font-size:12px;font-weight:600;color:var(--text); }
+  .role-badge { font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;background:linear-gradient(135deg,var(--accent)22,var(--accent2)11);color:var(--accent);border:1px solid var(--accent)33; }
+
+  /* ── HIDDEN TABLE ── */
+  .team-table { display:none; }
+
+  /* ── DASHBOARD BTN ── */
+  .dashboard-btn { display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;text-decoration:none;border:none;cursor:pointer;box-shadow:0 4px 20px var(--accent)44;transition:opacity 0.2s,transform 0.2s;animation:fadeUp 0.5s ease 0.3s both; }
+  .dashboard-btn:hover { opacity:0.9;transform:translateY(-2px); }
+  .dashboard-btn svg { width:16px;height:16px;stroke:#fff;stroke-width:2.5; }
+
+  .mob-toggle { display:none;position:fixed;top:16px;left:16px;z-index:300;width:40px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;place-items:center; }
+  .mob-toggle svg { width:20px;height:20px;stroke:var(--text); }
+  .sidebar-overlay { display:none;position:fixed;inset:0;background:#00000080;z-index:200; }
+
+.connect-msg {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.4s ease both;
+}
+
+  @media(max-width:900px){.members-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:700px){.sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);}.sidebar.open{transform:none;}.sidebar-overlay.open{display:block;}.mob-toggle{display:grid;}.topbar{padding:14px 20px 14px 64px;}.content{padding:20px;}}
+  @media(max-width:480px){.members-grid{grid-template-columns:1fr;}}
+</style>
+
+<button class="mob-toggle" id="mobToggle">
+  <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div id="teamup-root">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">T</div>
+      <div class="logo-text">TeamUp</div>
+    </div>
+    <div class="profile-card" onclick="window.location.href='{{ url_for('view_profile') }}'">
+      <div class="avatar">{{ name[0]|upper }}</div>
+      <div class="profile-info">
+        <div class="profile-name">{{ name }}</div>
+        <div class="profile-role">Student</div>
+      </div>
+      <a href="{{ url_for('edit_profile') }}" class="edit-btn" onclick="event.stopPropagation()">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Workspace</div>
+      <a class="nav-item" href="{{ url_for('dashboard') }}">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="{{ url_for('add_project') }}">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        Upload Project
+      </a>
+      <a class="nav-item" href="{{ url_for('my_projects') }}">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        My Projects
+        <span class="nav-badge">{{ project_count }}</span>
+      </a>
+      <a class="nav-item active" href="{{ url_for('hackathons') }}">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Hackathons
+        <span class="nav-badge" style="background:var(--accent2);">5</span>
+      </a>
+    </div>
+    <div class="theme-section">
+      <div class="theme-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Theme
+      </div>
+      <div class="theme-dots">
+        <div class="theme-dot active" data-theme-pick="aurora" onclick="setTheme('aurora',this)"></div>
+        <div class="theme-dot" data-theme-pick="aurora-light" onclick="setTheme('aurora-light',this)"></div>
+        <div class="theme-dot" data-theme-pick="neon-ember" onclick="setTheme('neon-ember',this)"></div>
+        <div class="theme-dot" data-theme-pick="neon-ember-light" onclick="setTheme('neon-ember-light',this)"></div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout-btn">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Logout
+      </a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Team <span>Info</span></div>
+        <div class="topbar-sub" id="topbarSub">Your hackathon team</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ERROR BANNER — shown when team creation failed -->
+      <div class="error-banner" id="errorBanner">
+        <div class="error-icon">
+          <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div class="error-body">
+          <div class="error-title">Team Could Not Be Formed</div>
+          <div class="error-msg" id="errorMsg">Sorry, we couldn't create your team due to a shortage of available members. Not enough participants with matching skill profiles are registered for this hackathon yet. Please try again later or check back when more members have joined.</div>
+        </div>
+        <div class="error-close" onclick="document.getElementById('errorBanner').classList.remove('show')">
+          <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </div>
+      </div>
+
+      <!-- HACKATHON CONTEXT BANNER -->
+      {% if hackathon %}
+      <div class="hackathon-banner">
+        <div class="banner-info">
+          <div class="banner-hackathon-label">Hackathon</div>
+          <div class="banner-hackathon-name">{{ hackathon.name }}</div>
+        </div>
+        <div class="banner-badge">🟢 Active</div>
+      </div>
+      {% endif %}
+
+      <!-- MEMBER CARDS -->
+      <div class="members-grid">
+        {% for member in team_members %}
+        <div class="member-card">
+          {% if member.is_current_user %}<div class="you-badge">You</div>{% endif %}
+          <div class="member-top">
+            <div class="member-avatar">{{ member.name[0]|upper }}</div>
+            <div class="member-name-block">
+              <div class="member-name">{{ member.name }}</div>
+              <div class="member-email">
+                <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                {{ member.email }}
+              </div>
+            </div>
+          </div>
+          <div class="member-divider"></div>
+          <div class="member-meta-row">
+            <div class="meta-item">
+              <div class="meta-label">Institution</div>
+              <div class="meta-value">{{ member.institution }}</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Role</div>
+              <div class="role-badge">{{ member.role }}</div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- ORIGINAL hidden table -->
+      <table class="team-table">
+        <thead><tr><th>Name</th><th>Institution</th><th>Role Assigned</th></tr></thead>
+        <tbody>
+          {% for member in team_members %}
+          <tr><td>{{ member.name }}</td><td>{{ member.institution }}</td><td>{{ member.role }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="connect-msg">
+  <div style="width:42px;height:42px;border-radius:12px;background:var(--accent)18;border:1px solid var(--accent)33;display:grid;place-items:center;flex-shrink:0;">
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+  </div>
+  <div>
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px;">You can connect with your teammates using the email addresses shown above.</div>
+    <div style="font-size:12px;color:var(--text-muted);">Reach out and start collaborating!</div>
+  </div>
+</div>
+
+      <!-- ORIGINAL dashboard btn -->
+      <a href="/dashboard" class="dashboard-btn">
+        <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Go to Dashboard
+      </a>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  document.getElementById('mobToggle').addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('open'); });
+  overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('open'); });
+
+  function setTheme(theme, dotEl) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    document.getElementById('teamup-root').setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    dotEl.classList.add('active');
+  }
+
+  // Read ?error= from URL and show error banner
+  const params = new URLSearchParams(window.location.search);
+  const errorParam = params.get('error');
+  if (errorParam) {
+    const banner = document.getElementById('errorBanner');
+    banner.classList.add('show');
+    // Customise message based on error type from backend
+    if (errorParam === 'not_enough_members') {
+      document.getElementById('errorMsg').textContent =
+        "Sorry, we couldn't create your team due to a shortage of available members. Not enough participants with matching skill profiles are registered for this hackathon yet. Please try again later or check back when more members have joined.";
+    } else {
+      // Use the raw error string from backend if it's a human-readable message
+      document.getElementById('errorMsg').textContent = decodeURIComponent(errorParam);
+    }
+  }
+
+  // Update topbar subtitle
+  const memberCount = document.querySelectorAll('.member-card').length;
+  document.getElementById('topbarSub').textContent =
+    memberCount > 0
+      ? `${memberCount} member${memberCount !== 1 ? 's' : ''} in your team`
+      : 'No team members yet';
+</script>
+{% endblock %}

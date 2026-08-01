@@ -1,5 +1,5 @@
 import pandas as pd
-from db_connection import get_connection
+from backend.db_connection import get_connection
 
 
 def get_role(frontend, backend, communication, leadership):
@@ -18,9 +18,10 @@ def get_role(frontend, backend, communication, leadership):
 
 
 def assign_roles():
-
     conn = get_connection()
     cursor = conn.cursor()
+
+    
 
     # ✅ Get valid hackathons only (remove NULL)
     hackathons = pd.read_sql("""

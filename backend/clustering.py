@@ -1,9 +1,8 @@
 import pandas as pd
 from sklearn.cluster import KMeans
-from db_connection import get_connection
+from backend.db_connection import get_connection
 
 def perform_hackathon_clustering():
-
     conn = get_connection()
     cursor = conn.cursor()
 

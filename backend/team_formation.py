@@ -1,9 +1,8 @@
 import pandas as pd
-from db_connection import get_connection
+from backend.db_connection import get_connection
 
 
 def form_balanced_role_teams():
-
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -149,13 +148,13 @@ def form_balanced_role_teams():
 
 if __name__ == "__main__":
     form_balanced_role_teams()
-def get_teams_by_hackathon(connection):
+def get_teams_by_hackathon(conn):
     """
     Returns teams grouped by hackathon and team_id
     Used for teams.html display
     """
 
-    cursor = connection.cursor()
+    cursor = conn.cursor()
 
     cursor.execute("""
         SELECT

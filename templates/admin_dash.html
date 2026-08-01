@@ -22,10 +22,10 @@
   .admin-badge{display:flex;align-items:center;gap:10px;padding:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,transparent),color-mix(in srgb,var(--accent2) 5%,transparent));border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:var(--radius);margin-bottom:18px;}
   .admin-avatar{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;}
   .admin-info{flex:1;min-width:0;}
-  .admin-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .admin-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .admin-role{font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;letter-spacing:.5px;text-transform:uppercase;}
   .nav-label{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-muted);padding:0 8px;margin-bottom:5px;margin-top:8px;}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--text-muted);font-size:13.5px;font-weight:500;position:relative;margin-bottom:2px;transition:background .2s,color .2s;border:1px solid transparent;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--text-muted);font-size:14px;font-weight:500;position:relative;margin-bottom:2px;transition:background .2s,color .2s;border:1px solid transparent;}
   .nav-item svg{width:17px;height:17px;stroke:currentColor;flex-shrink:0;}
   .nav-item:hover{background:var(--surface2);color:var(--text);}
   .nav-item.active{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 15%,transparent),color-mix(in srgb,var(--accent2) 8%,transparent));color:var(--accent);border-color:color-mix(in srgb,var(--accent) 25%,transparent);}
@@ -49,7 +49,7 @@
   /* MAIN */
   .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;overflow-y:auto;}
   .topbar{padding:16px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10;backdrop-filter:blur(12px);transition:background .4s;gap:16px;}
-  .topbar-greeting{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;background:linear-gradient(135deg,var(--text),var(--text-muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .topbar-greeting{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;background:linear-gradient(135deg,var(--text),var(--text-muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
   .topbar-greeting span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
   .topbar-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
 
@@ -66,7 +66,7 @@
   .stat-card:hover::after{opacity:.14;}
   .stat-icon{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;margin-bottom:12px;}
   .stat-icon svg{width:16px;height:16px;}
-  .stat-num{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;line-height:1;margin-bottom:3px;}
+  .stat-num{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;line-height:1;margin-bottom:3px;}
   .stat-label{font-size:11px;color:var(--text-muted);}
   .stat-trend{font-size:10px;margin-top:5px;font-weight:600;}
   .stat-trend.up{color:#10b981;}
@@ -81,7 +81,7 @@
   .bottom-row{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;}
   .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:fadeUp .5s ease .28s both;}
   .panel-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-  .panel-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+  .panel-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;}
   .panel-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
   .panel-action{font-size:12px;color:var(--accent);cursor:pointer;text-decoration:none;font-weight:500;padding:4px 11px;border-radius:8px;border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);transition:background .2s;}
   .panel-action:hover{background:color-mix(in srgb,var(--accent) 12%,transparent);}
@@ -91,7 +91,7 @@
   .activity-item:last-child{border-bottom:none;padding-bottom:0;}
   .activity-item:first-child{padding-top:0;}
   .activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
-  .activity-text{flex:1;font-size:13px;line-height:1.5;}
+  .activity-text{flex:1;font-size:14px;line-height:1.5;}
   .activity-text strong{font-weight:600;}
   .activity-time{font-size:11px;color:var(--text-muted);margin-top:2px;}
   .hack-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
@@ -260,7 +260,7 @@
             </div>
             <div class="hack-info">
               <div class="hack-name">{{ hack.name }}</div>
-              <div class="hack-meta">{{ hack.date }} · {{ hack.teams }} teams</div>
+              <div class="hack-meta">{{ hack.date }} · {{ hack.venue }}</div>
             </div>
             <div class="hack-status 
                         {% if hack.status == 'ACTIVE' %}badge-active

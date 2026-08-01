@@ -422,18 +422,25 @@
     font-weight: 700;
     font-size: 15px;
   }
-  .panel-action {
-    font-size: 12px;
-    color: var(--accent);
-    cursor: pointer;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 5px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--accent)44;
-    transition: background 0.2s;
-  }
-  .panel-action:hover { background: var(--accent)18; }
+  /* ── PANEL ACTION BUTTONS (replace existing .panel-action) ── */
+.panel-action {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none;
+  transition: opacity 0.2s, transform 0.2s;
+  letter-spacing: 0.2px;
+}
+
+.panel-action:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
   .panel-body { padding: 18px 22px; }
 
   /* Project list */
@@ -515,6 +522,39 @@
     display: inline-block;
   }
 
+  .hack-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ── STATUS BADGES (replace existing badge styles) ── */
+.hack-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.badge-active {
+  background: #10b98122;
+  color: #10b981;
+  border: 1px solid #10b98144;
+}
+
+.badge-closed {
+  background: #ff5c5c22;
+  color: #ff5c5c;
+  border: 1px solid #ff5c5c44;
+}
+
+.badge-upcoming {
+  background: #4da3ff22;
+  color: #4da3ff;
+  border: 1px solid #4da3ff44;
+}
+
   /* Mobile toggle */
   .mob-toggle {
     display: none;
@@ -577,7 +617,7 @@
 
   <div class="profile-info">
     <div class="profile-name">{{ name }}</div>
-    <!-- <div class="profile-role">Full-Stack Dev · Pro</div> -->
+     <div class="profile-role">Student</div>
   </div>
 
   <a href="{{ url_for('edit_profile') }}" 
@@ -592,23 +632,23 @@
   <!-- Main nav -->
   <div class="nav-section">
     <div class="nav-label">Workspace</div>
-    <a class="nav-item active" id="nav-dashboard" href="#" onclick="setActive('dashboard'); return false;">
+    <a class="nav-item active" id="nav-dashboard" href="{{ url_for('dashboard') }}">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
       Dashboard
     </a>
-    <a class="nav-item" id="nav-upload" href="#" onclick="setActive('upload'); return false;">
+    <a class="nav-item" id="nav-upload" href="{{ url_for('add_project') }}">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
       Upload Project
     </a>
-    <a class="nav-item" id="nav-projects" href="#" onclick="setActive('projects'); return false;">
+    <a class="nav-item" id="nav-projects" href="{{ url_for('my_projects') }}">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
       My Projects
-      <span class="nav-badge">3</span>
+      <span class="nav-badge">{{ project_count }}</span>
     </a>
-    <a class="nav-item" id="nav-hackathon" href="#" onclick="setActive('hackathon'); return false;">
+    <a class="nav-item" id="nav-hackathon" href="{{ url_for('hackathons') }}">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
       Hackathons
-      <span class="nav-badge" style="background: var(--accent2);">2</span>
+      <span class="nav-badge" style="background: var(--accent2);">5</span>
     </a>
   </div>
 
@@ -625,7 +665,7 @@
       <div class="theme-dot" data-theme-pick="neon-ember-light" title="Neon Ember Light" onclick="setTheme('neon-ember-light', this)"></div>
     </div>
 
-    <a href="/logout" class="logout-btn">
+    <a href="{{ url_for('logout') }}" class="logout-btn">
       <svg fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
       Logout
     </a>
@@ -646,15 +686,15 @@
         <div class="stat-icon" style="background: var(--accent)18;">
           <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
         </div>
-        <div class="stat-num">3</div>
+        <div class="stat-num">{{ project_count }}</div>
         <div class="stat-label">Projects Uploaded</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background: var(--accent2)18;">
           <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         </div>
-        <div class="stat-num">2</div>
-        <div class="stat-label">Hackathons Joined</div>
+        <div class="stat-num">5</div>
+        <div class="stat-label">Total Hackathons</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background: var(--accent3)18;">
@@ -679,33 +719,44 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">My Projects</div>
-          <a href="#" class="panel-action" onclick="setActive('projects'); return false;">View All</a>
+          <a href="{{ url_for('my_projects') }}" class="panel-action">View All</a>
         </div>
         <div class="panel-body">
-          <div class="project-item">
-            <div class="project-thumb" style="background: var(--accent)18;">🧠</div>
-            <div class="project-info">
-              <div class="project-name">NeuralNotes</div>
-              <div class="project-meta">AI · React · Python · Updated 2d ago</div>
-            </div>
-            <div class="project-status status-live">Live</div>
+          <div class="content">
+
+            {% if projects %}
+              {% for project in projects %}
+
+              <div class="project-item">
+                <div class="project-thumb" style="background: var(--accent)18;">
+                  {% set emojis = ['🚀','💡','🧠','⚡'] %}
+                  {{ emojis[loop.index0 % 4] }}
+                </div>
+
+                <div class="project-info">
+                  <div class="project-name">{{ project[0] }}</div>
+
+                  <div class="project-meta">
+                    {{ project[1] }} · 
+                    Updated {{ project[3].strftime('%d %b %Y') }}
+                  </div>
+                </div>
+
+                <div class="project-status
+                  {% if project[2] == 'LIVE' %}status-live
+                  {% elif project[2] == 'WIP' %}status-wip
+                  {% else %}status-review{% endif %}">
+                  {{ project[2] }}
+                </div>
+              </div>
+
+              {% endfor %}
+            {% else %}
+              <p>No projects uploaded yet</p>
+            {% endif %}
+
           </div>
-          <div class="project-item">
-            <div class="project-thumb" style="background: var(--accent2)18;">🌐</div>
-            <div class="project-info">
-              <div class="project-name">GeoMapper</div>
-              <div class="project-meta">Maps · Node.js · Updated 5d ago</div>
-            </div>
-            <div class="project-status status-wip">WIP</div>
-          </div>
-          <div class="project-item">
-            <div class="project-thumb" style="background: var(--accent3)18;">⚡</div>
-            <div class="project-info">
-              <div class="project-name">SpeedLaunch</div>
-              <div class="project-meta">SaaS · Next.js · Updated 1w ago</div>
-            </div>
-            <div class="project-status status-review">Review</div>
-          </div>
+
         </div>
       </div>
 
@@ -713,33 +764,59 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">Hackathons</div>
-          <a href="#" class="panel-action" onclick="setActive('hackathon'); return false;">Browse</a>
+          <a href="{{ url_for('hackathons') }}" class="panel-action active">Browse</a>
         </div>
+
         <div class="panel-body">
-          <div class="hack-card">
-            <div class="hack-name">AI Frontier 2025</div>
-            <div class="hack-meta">
-              <span>📅 Mar 15–17</span>
-              <span>👥 1,200 teams</span>
+
+          {% if hackathons %}
+            {% for hackathon in hackathons[:4] %}
+            
+            <div class="hack-card">
+
+              <!-- Top Row (Name + Status) -->
+              <div class="hack-top">
+                <div class="hack-name">
+                  {{ hackathon.hackathon_name }}
+                </div>
+
+                <!-- ✅ Status on right -->
+                <div class="hack-status {% if hackathon.status == 'ACTIVE' %}badge-active{% elif hackathon.status == 'CLOSED' %}badge-closed{% else %}badge-upcoming{% endif %}"
+                  style="
+                    font-size: 11px;
+                    font-weight: 700;
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    {% if hackathon.status == 'ACTIVE' %}
+                      background: #10b98122; color: #10b981; border: 1px solid #10b98144;
+                    {% elif hackathon.status == 'CLOSED' %}
+                      background: #ff5c5c22; color: #ff5c5c; border: 1px solid #ff5c5c44;
+                    {% else %}
+                      background: #4da3ff22; color: #4da3ff; border: 1px solid #4da3ff44;
+                    {% endif %}
+                  ">
+                  {{ hackathon.status }}
+                </div>
+              </div>
+
+              <!-- Meta Info -->
+              <div class="hack-meta">
+                <span>
+                  📅 {{ hackathon.hackathon_date.strftime('%b %d, %Y') }}
+                </span>
+
+                <span>
+                  📍 {{ hackathon.venue }}
+                </span>
+              </div>
+
             </div>
-            <span class="hack-prize">$50,000 Prize Pool</span>
-          </div>
-          <div class="hack-card">
-            <div class="hack-name">WebDev World Cup</div>
-            <div class="hack-meta">
-              <span>📅 Apr 1–3</span>
-              <span>👥 800 teams</span>
-            </div>
-            <span class="hack-prize">$25,000 Prize Pool</span>
-          </div>
-          <div class="hack-card">
-            <div class="hack-name">GreenTech Hack</div>
-            <div class="hack-meta">
-              <span>📅 May 10–12</span>
-              <span>👥 500 teams</span>
-            </div>
-            <span class="hack-prize">$15,000 Prize Pool</span>
-          </div>
+
+            {% endfor %}
+          {% else %}
+            <p>No hackathons available</p>
+          {% endif %}
+
         </div>
       </div>
 
